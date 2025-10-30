@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marketplace Jobs | Professional Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .skill-tag {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid #cbd5e1;
+      border-radius: 9999px;
+      padding: 4px 10px;
+      font-size: 13px;
+      color: #334155;
+      margin: 4px;
+      background-color: #f8fafc;
+      transition: all 0.2s ease;
+    }
+    .skill-tag:hover { background-color: #e2e8f0; }
+    .drawer { transition: transform 0.3s ease-in-out; }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-900 text-gray-100 flex flex-col p-6 space-y-6">
+      <div class="flex items-center gap-2 text-xl font-semibold">
+        <i data-lucide="briefcase" class="w-5 h-5"></i>
+        <span>Job Portal</span>
+      </div>
+      <nav class="flex flex-col space-y-2 text-sm font-medium">
+        <a href="simple_jobs_ui.html" class="flex items-center gap-2 px-3 py-2 rounded bg-gray-800">
+          <i data-lucide="layout-list" class="w-4 h-4"></i> Marketplace Jobs
+        </a>
+        <a href="scraper" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800">
+          <i data-lucide="search" class="w-4 h-4"></i> Scraper
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 p-10">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold text-gray-900 flex items-center gap-2">
+          <i data-lucide="layout-list" class="w-5 h-5"></i> Marketplace Jobs
+        </h1>
+      </div>
+
+      <div id="jobList" class="bg-white rounded-2xl shadow divide-y"></div>
+
+      <!-- Pagination -->
+      <div class="flex justify-between items-center mt-6">
+        <button id="prevPage" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm font-medium">Previous</button>
+        <span id="pageInfo" class="text-gray-700 text-sm"></span>
+        <button id="nextPage" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm font-medium">Next</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Job Drawer -->
+  <section id="jobDrawer"
+    class="drawer fixed right-0 top-0 h-full w-full md:w-[45%] bg-white shadow-2xl transform translate-x-full overflow-y-auto z-20">
+    <div class="flex justify-between items-center border-b p-5 bg-gray-50 sticky top-0 z-30">
+      <h2 id="drawerTitle" class="text-lg font-semibold text-gray-900">Job Details</h2>
+      <button onclick="closeDrawer()" class="hover:bg-gray-200 p-2 rounded-full transition">
+        <i data-lucide="x" class="w-5 h-5 text-gray-600"></i>
+      </button>
+    </div>
+    <div id="jobDrawerContent" class="p-8"></div>
+  </section>
+
+  <script>
+    lucide.createIcons();
+
+    let allJobs = [];
+    let currentPage = 1;
+    const pageSize = 10;
+
+    async function loadJobs() {
+      const res = await fetch("/api/jobs");
+      const data = await res.json();
+      if (!data.success) return alert("Failed to load jobs.");
+      allJobs = data.jobs || [];
+      currentPage = 1;
+      renderJobs();
+    }
+
+    function renderJobs() {
+      const jobList = document.getElementById("jobList");
+      jobList.innerHTML = "";
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const jobsToShow = allJobs.slice(start, end);
+
+      if (!jobsToShow.length) {
+        jobList.innerHTML = `<p class='p-6 text-gray-500 text-center font-medium'>No jobs found. Try scraping new ones!</p>`;
+        return;
+      }
+
+      jobsToShow.forEach(job => {
+        const div = document.createElement("div");
+        div.className = "p-6 cursor-pointer hover:bg-gray-50 transition";
+        div.innerHTML = `
+          <div class="flex items-start gap-4">
+            <img src="${job.company_logo || '/static/default-logo.png'}" alt="Logo"
+              class="w-12 h-12 rounded object-contain border" onerror="this.src='/static/default-logo.png'"/>
+            <div class="flex-1">
+              <h3 class="font-semibold text-gray-900 text-lg">${job.title}</h3>
+              <p class="text-gray-700">${job.company}</p>
+              <p class="text-sm text-gray-500 mt-1">${job.location || "N/A"} • ${job.posted_time || ""}</p>
+            </div>
+            <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-medium">${job.employment_type || "N/A"}</span>
+          </div>
+        `;
+        div.addEventListener("click", () => openDrawer(job));
+        jobList.appendChild(div);
+      });
+
+      updatePagination();
+    }
+
+    function updatePagination() {
+      const totalPages = Math.ceil(allJobs.length / pageSize);
+      document.getElementById("pageInfo").textContent = `Page ${currentPage} of ${totalPages}`;
+      document.getElementById("prevPage").disabled = currentPage === 1;
+      document.getElementById("nextPage").disabled = currentPage === totalPages;
+    }
+
+    document.getElementById("prevPage").addEventListener("click", () => {
+      if (currentPage > 1) { currentPage--; renderJobs(); }
+    });
+    document.getElementById("nextPage").addEventListener("click", () => {
+      const totalPages = Math.ceil(allJobs.length / pageSize);
+      if (currentPage < totalPages) { currentPage++; renderJobs(); }
+    });
+
+    function extractSkills(text) {
+      if (!text) return [];
+      const blacklist = ["About", "Responsibilities", "Job", "Experience"];
+      const matches = text.match(/\b[A-Z][a-zA-Z0-9+#.()]{2,}\b/g) || [];
+      return [...new Set(matches.filter(w => !blacklist.includes(w)))].slice(0, 15);
+    }
+
+    function openDrawer(job) {
+      const drawer = document.getElementById("jobDrawer");
+      const content = document.getElementById("jobDrawerContent");
+      const title = document.getElementById("drawerTitle");
+      const skills = extractSkills(job.description);
+
+      drawer.classList.remove("translate-x-full");
+      title.textContent = job.title;
+
+      content.innerHTML = `
+        <div class="max-w-3xl mx-auto space-y-8">
+          <div class="flex items-start gap-4">
+            <img src="${job.company_logo || '/static/default-logo.png'}" alt="Logo"
+              class="w-16 h-16 rounded object-contain border" onerror="this.src='/static/default-logo.png'"/>
+            <div>
+              <h1 class="text-2xl font-bold text-gray-900 mb-1">${job.title}</h1>
+              <p class="text-lg text-gray-700">${job.company}</p>
+              <p class="text-sm text-gray-500">${job.location || "N/A"} • ${job.posted_time || ""}</p>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 rounded-lg p-4 grid grid-cols-2 gap-3 text-sm text-gray-700">
+            <p><span class="font-medium">Employment Type:</span> ${job.employment_type || "N/A"}</p>
+            <p><span class="font-medium">Seniority Level:</span> ${job.seniority_level || "N/A"}</p>
+            <p><span class="font-medium">Job Function:</span> ${job.job_function || "N/A"}</p>
+            <p><span class="font-medium">Industries:</span> ${job.industries || "N/A"}</p>
+            <p><span class="font-medium">Scraped:</span> ${new Date(job.scraped_at).toLocaleString()}</p>
+            <p><span class="font-medium">Keywords:</span> ${job.keywords || "N/A"}</p>
+          </div>
+
+          <div>
+            <div class="flex items-center gap-2 mb-2"><i data-lucide="file-text" class="w-4 h-4"></i> 
+              <span class="font-semibold text-gray-800">Job Description</span></div>
+            <div class="text-gray-700 leading-relaxed whitespace-pre-line border rounded-lg p-4 bg-gray-50">
+              ${job.description || "No description available."}
+            </div>
+          </div>
+
+          ${skills.length ? `
+          <div>
+            <div class="flex items-center gap-2 mb-2"><i data-lucide="briefcase" class="w-4 h-4"></i> 
+              <span class="font-semibold text-gray-800">Skills Required</span></div>
+            <div class="flex flex-wrap">${skills.map(s => `<span class="skill-tag">${s}</span>`).join('')}</div>
+          </div>` : ''}
+
+          ${job.company_about || job.company_url || job.company_stats ? `
+          <div class="border-t pt-4">
+            <div class="flex items-center gap-2 mb-2"><i data-lucide="building-2" class="w-4 h-4"></i>
+              <span class="font-semibold text-gray-800">About ${job.company}</span></div>
+            <div class="text-gray-700 leading-relaxed bg-gray-50 border rounded-lg p-4">
+              ${job.company_about || "No company details available."}
+            </div>
+            ${job.company_stats ? `<p class="text-sm text-gray-500 mt-2">${job.company_stats}</p>` : ""}
+            ${job.company_url ? `<a href="${job.company_url}" target="_blank" class="inline-flex items-center gap-1 mt-3 text-indigo-600 hover:underline text-sm"><i data-lucide="external-link" class="w-4 h-4"></i> Company Profile</a>` : ""}
+          </div>` : ''}
+
+          <div class="border-t pt-4">
+            <a href="${job.job_url}" target="_blank" class="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition text-sm">
+              <i data-lucide="external-link" class="w-4 h-4"></i> View on LinkedIn
+            </a>
+          </div>
+        </div>`;
+      lucide.createIcons();
+    }
+
+    function closeDrawer() {
+      document.getElementById("jobDrawer").classList.add("translate-x-full");
+    }
+
+    loadJobs();
+  </script>
+</body>
+</html>
