@@ -6,3 +6,5 @@ openpyxl>=3.1.2
 flask>=2.0.1
 flask-cors>=3.0.10
 psycopg2-binary>=2.9.7
+chromedriver-autoinstaller
+undetected-chromedriver
