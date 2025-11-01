@@ -121,6 +121,36 @@
       margin-top: 0.125rem;
       flex-shrink: 0;
     }
+    
+    .form-input {
+      transition: all 0.2s ease;
+      border: 2px solid #e5e7eb;
+    }
+    .form-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      outline: none;
+    }
+    
+    .modal-overlay {
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+    }
+    
+    .floating-add-btn {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 30;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+      transition: all 0.2s ease;
+    }
+    
+    .floating-add-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 35px rgba(16, 185, 129, 0.4);
+    }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -157,6 +187,17 @@
             <span id="sidebarSalary" class="text-white font-medium">--</span>
           </div>
         </div>
+      </div>
+
+      <!-- Add Job Button in Sidebar -->
+      <div class="mt-8 pt-6 border-t border-gray-700">
+        <button 
+          onclick="openAddJobModal()" 
+          class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2"
+        >
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          Add New Job
+        </button>
       </div>
     </aside>
 
@@ -204,6 +245,7 @@
         <button onclick="filterBy('remote')" class="filter-chip" data-filter="remote">Remote</button>
         <button onclick="filterBy('recent')" class="filter-chip" data-filter="recent">Recent</button>
         <button onclick="filterBy('full-time')" class="filter-chip" data-filter="full-time">Full-time</button>
+        <button onclick="filterBy('manual')" class="filter-chip" data-filter="manual">Manual Entries</button>
         <div class="ml-auto text-sm text-gray-500">
           Showing <span id="resultCount">0</span> jobs
         </div>
@@ -227,11 +269,17 @@
           <i data-lucide="briefcase" class="w-8 h-8 text-gray-400"></i>
         </div>
         <h3 class="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
-        <p class="text-gray-500 mb-4">Try adjusting your search or scrape new jobs.</p>
-        <a href="/scraper" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
-          <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
-          Scrape New Jobs
-        </a>
+        <p class="text-gray-500 mb-4">Try adjusting your search or add/scrape new jobs.</p>
+        <div class="flex justify-center gap-3">
+          <button onclick="openAddJobModal()" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+            <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+            Add New Job
+          </button>
+          <a href="/scraper" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+            <i data-lucide="search" class="w-4 h-4 mr-2"></i>
+            Scrape Jobs
+          </a>
+        </div>
       </div>
 
       <!-- Pagination -->
@@ -257,6 +305,315 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Floating Add Button -->
+  <button 
+    onclick="openAddJobModal()" 
+    class="floating-add-btn w-16 h-16 text-white rounded-full flex items-center justify-center"
+    title="Add New Job"
+  >
+    <i data-lucide="plus" class="w-6 h-6"></i>
+  </button>
+
+  <!-- Add Job Modal -->
+  <div id="addJobModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeAddJobModal()"></div>
+    <div class="relative flex items-center justify-center min-h-screen p-4">
+      <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
+          <div class="flex justify-between items-center">
+            <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <i data-lucide="plus-circle" class="w-5 h-5 text-green-600"></i>
+              Add New Job
+            </h3>
+            <button onclick="closeAddJobModal()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+              <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Modal Content -->
+        <div class="p-6">
+          <form id="addJobForm" class="space-y-6">
+            <!-- Basic Job Information -->
+            <div class="bg-gray-50 rounded-lg p-6">
+              <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <i data-lucide="briefcase" class="w-5 h-5 text-indigo-600"></i>
+                Basic Job Information
+              </h4>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Job Title <span class="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="title" 
+                    required 
+                    class="form-input w-full rounded-lg px-4 py-3"
+                    placeholder="e.g. Senior Data Scientist"
+                  >
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Company <span class="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="company" 
+                    required 
+                    class="form-input w-full rounded-lg px-4 py-3"
+                    placeholder="e.g. Tech Solutions Inc."
+                  >
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Location <span class="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="location" 
+                    required 
+                    class="form-input w-full rounded-lg px-4 py-3"
+                    placeholder="e.g. Bengaluru, India or Remote"
+                  >
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Employment Type
+                  </label>
+                  <select name="employment_type" class="form-input w-full rounded-lg px-4 py-3">
+                    <option value="">Select Type</option>
+                    <option value="Full-time">Full-time</option>
+                    <option value="Part-time">Part-time</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Temporary">Temporary</option>
+                    <option value="Internship">Internship</option>
+                    <option value="Remote">Remote</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Experience Level
+                  </label>
+                  <select name="seniority_level" class="form-input w-full rounded-lg px-4 py-3">
+                    <option value="">Select Level</option>
+                    <option value="Internship">Internship</option>
+                    <option value="Entry level">Entry Level</option>
+                    <option value="Associate">Associate</option>
+                    <option value="Mid-Senior level">Mid-Senior Level</option>
+                    <option value="Director">Director</option>
+                    <option value="Executive">Executive</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Salary Range
+                  </label>
+                  <input 
+                    type="text" 
+                    name="salary_range" 
+                    class="form-input w-full rounded-lg px-4 py-3"
+                    placeholder="e.g. ₹8-12 LPA or $80,000-120,000"
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Job Description -->
+            <div class="bg-gray-50 rounded-lg p-6">
+              <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <i data-lucide="file-text" class="w-5 h-5 text-indigo-600"></i>
+                Job Description
+              </h4>
+              
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                  Detailed Description <span class="text-red-500">*</span>
+                </label>
+                <textarea 
+                  name="description" 
+                  required 
+                  rows="8"
+                  class="form-input w-full rounded-lg px-4 py-3"
+                  placeholder="Provide a detailed job description including responsibilities, requirements, and qualifications..."
+                ></textarea>
+                <p class="text-xs text-gray-500 mt-1">Use bullet points (•) for better formatting</p>
+              </div>
+              
+              <div class="mt-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                  Required Skills
+                </label>
+                <input 
+                  type="text" 
+                  name="extracted_skills" 
+                  class="form-input w-full rounded-lg px-4 py-3"
+                  placeholder="e.g. Python, Machine Learning, SQL, React (comma separated)"
+                >
+                <p class="text-xs text-gray-500 mt-1">Separate skills with commas</p>
+              </div>
+            </div>
+
+            <!-- Company Information -->
+            <div class="bg-gray-50 rounded-lg p-6">
+              <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <i data-lucide="building-2" class="w-5 h-5 text-indigo-600"></i>
+                Company Information
+              </h4>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Company Website
+                  </label>
+                  <input 
+                    type="url" 
+                    name="company_url" 
+                    class="form-input w-full rounded-lg px-4 py-3"
+                    placeholder="https://company.com"
+                  >
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Company Logo URL
+                  </label>
+                  <input 
+                    type="url" 
+                    name="company_logo" 
+                    class="form-input w-full rounded-lg px-4 py-3"
+                    placeholder="https://company.com/logo.png"
+                  >
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Industry
+                  </label>
+                  <input 
+                    type="text" 
+                    name="industries" 
+                    class="form-input w-full rounded-lg px-4 py-3"
+                    placeholder="e.g. Technology, Healthcare, Finance"
+                  >
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Job Function
+                  </label>
+                  <input 
+                    type="text" 
+                    name="job_function" 
+                    class="form-input w-full rounded-lg px-4 py-3"
+                    placeholder="e.g. Engineering, Sales, Marketing"
+                  >
+                </div>
+              </div>
+              
+              <div class="mt-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                  About the Company
+                </label>
+                <textarea 
+                  name="company_about" 
+                  rows="4"
+                  class="form-input w-full rounded-lg px-4 py-3"
+                  placeholder="Brief description about the company, its mission, values, and culture..."
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="bg-gray-50 rounded-lg p-6">
+              <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <i data-lucide="info" class="w-5 h-5 text-indigo-600"></i>
+                Additional Information
+              </h4>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Application URL
+                  </label>
+                  <input 
+                    type="url" 
+                    name="job_url" 
+                    class="form-input w-full rounded-lg px-4 py-3"
+                    placeholder="https://company.com/careers/job-id"
+                  >
+                  <p class="text-xs text-gray-500 mt-1">Where candidates can apply</p>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Posted Date
+                  </label>
+                  <input 
+                    type="date" 
+                    name="posted_time" 
+                    class="form-input w-full rounded-lg px-4 py-3"
+                    value=""
+                  >
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Applicant Count
+                  </label>
+                  <input 
+                    type="text" 
+                    name="applicant_count" 
+                    class="form-input w-full rounded-lg px-4 py-3"
+                    placeholder="e.g. 25 applicants"
+                  >
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Keywords/Tags
+                  </label>
+                  <input 
+                    type="text" 
+                    name="keywords" 
+                    class="form-input w-full rounded-lg px-4 py-3"
+                    placeholder="e.g. data science, remote, senior"
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
+              <button 
+                type="button" 
+                onclick="closeAddJobModal()"
+                class="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit"
+                class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition flex items-center gap-2"
+                id="submitJobBtn"
+              >
+                <i data-lucide="save" class="w-4 h-4"></i>
+                Add Job
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Job Drawer -->
@@ -291,6 +648,9 @@
     document.addEventListener('DOMContentLoaded', function() {
       loadJobs();
       setupEventListeners();
+      
+      // Set today's date as default for posted_time
+      document.querySelector('input[name="posted_time"]').value = new Date().toISOString().split('T')[0];
     });
 
     function setupEventListeners() {
@@ -320,6 +680,9 @@
           renderJobs();
         }
       });
+
+      // Add Job Form
+      document.getElementById('addJobForm').addEventListener('submit', handleAddJob);
     }
 
     async function loadJobs() {
@@ -345,6 +708,65 @@
         showErrorState();
         showToast('Failed to load jobs', 'error');
       }
+    }
+
+    async function handleAddJob(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const jobData = Object.fromEntries(formData.entries());
+      
+      // Update submit button
+      const submitBtn = document.getElementById('submitJobBtn');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div> Saving...';
+      submitBtn.disabled = true;
+      
+      try {
+        const response = await fetch('/api/jobs', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(jobData)
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to add job');
+        }
+        
+        showToast('Job added successfully!', 'success');
+        closeAddJobModal();
+        document.getElementById('addJobForm').reset();
+        document.querySelector('input[name="posted_time"]').value = new Date().toISOString().split('T')[0];
+        
+        // Reload jobs to show the new one
+        await loadJobs();
+        
+      } catch (error) {
+        console.error('Error adding job:', error);
+        showToast(error.message, 'error');
+      } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    }
+
+    function openAddJobModal() {
+      document.getElementById('addJobModal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      
+      // Focus first input
+      setTimeout(() => {
+        document.querySelector('input[name="title"]').focus();
+      }, 100);
+    }
+
+    function closeAddJobModal() {
+      document.getElementById('addJobModal').classList.add('hidden');
+      document.body.style.overflow = 'auto';
     }
 
     function showLoadingState() {
@@ -422,6 +844,8 @@
             return new Date(job.scraped_at) > oneWeekAgo;
           case 'full-time':
             return job.employment_type && job.employment_type.toLowerCase().includes('full');
+          case 'manual':
+            return job.keywords === 'manual_entry' || !job.scraped_at;
           default:
             return true;
         }
@@ -459,6 +883,7 @@
         const timeAgo = getTimeAgo(job.scraped_at);
         const hasSkills = job.extracted_skills && job.extracted_skills !== 'N/A';
         const hasSalary = job.salary_range && job.salary_range !== 'N/A';
+        const isManualEntry = job.keywords === 'manual_entry' || !job.scraped_at;
         
         div.innerHTML = `
           <div class="flex items-start gap-4">
@@ -467,7 +892,10 @@
             <div class="flex-1">
               <div class="flex items-start justify-between mb-2">
                 <div>
-                  <h3 class="font-semibold text-gray-900 text-lg">${job.title}</h3>
+                  <h3 class="font-semibold text-gray-900 text-lg flex items-center gap-2">
+                    ${job.title}
+                    ${isManualEntry ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">Manual</span>' : ''}
+                  </h3>
                   <p class="text-gray-700">${job.company}</p>
                   <p class="text-sm text-gray-500 mt-1">
                     <i data-lucide="map-pin" class="w-3 h-3 inline mr-1"></i>
@@ -517,178 +945,6 @@
       document.getElementById("nextPage").disabled = currentPage === totalPages;
     }
 
-    function extractSkills(text) {
-      if (!text) return [];
-      const blacklist = ["About", "Responsibilities", "Job", "Experience"];
-      const matches = text.match(/\b[A-Z][a-zA-Z0-9+#.()]{2,}\b/g) || [];
-      return [...new Set(matches.filter(w => !blacklist.includes(w)))].slice(0, 15);
-    }
-
-    function openDrawer(job) {
-      const drawer = document.getElementById("jobDrawer");
-      const content = document.getElementById("jobDrawerContent");
-      const title = document.getElementById("drawerTitle");
-      const subtitle = document.getElementById("drawerSubtitle");
-      
-      const skills = job.extracted_skills && job.extracted_skills !== 'N/A' 
-        ? job.extracted_skills.split(',').map(s => s.trim())
-        : extractSkills(job.description);
-
-      drawer.classList.remove("translate-x-full");
-      title.textContent = job.title;
-      subtitle.textContent = `${job.company} • ${job.location || 'Remote'}`;
-
-      content.innerHTML = `
-        <div class="max-w-3xl mx-auto space-y-8">
-          <div class="flex items-start gap-4">
-            <img src="${job.company_logo || '/static/default-logo.png'}" alt="Logo"
-              class="w-16 h-16 rounded object-contain border" onerror="this.src='/static/default-logo.png'"/>
-            <div class="flex-1">
-              <h1 class="text-2xl font-bold text-gray-900 mb-1">${job.title}</h1>
-              <p class="text-lg text-gray-700">${job.company}</p>
-              <p class="text-sm text-gray-500">${job.location || "N/A"} • ${job.posted_time || ""}</p>
-            </div>
-          </div>
-
-          <div class="bg-gray-50 rounded-lg p-4 grid grid-cols-2 gap-3 text-sm text-gray-700">
-            <p><span class="font-medium">Employment Type:</span> ${job.employment_type || "N/A"}</p>
-            <p><span class="font-medium">Seniority Level:</span> ${job.seniority_level || "N/A"}</p>
-            <p><span class="font-medium">Job Function:</span> ${job.job_function || "N/A"}</p>
-            <p><span class="font-medium">Industries:</span> ${job.industries || "N/A"}</p>
-            ${job.salary_range && job.salary_range !== 'N/A' ? `
-            <p><span class="font-medium">Salary Range:</span> <span class="text-green-600 font-semibold">${job.salary_range}</span></p>
-            ` : ''}
-            ${job.applicant_count && job.applicant_count !== 'N/A' ? `
-            <p><span class="font-medium">Applicants:</span> ${job.applicant_count}</p>
-            ` : ''}
-            <p><span class="font-medium">Scraped:</span> ${new Date(job.scraped_at).toLocaleString()}</p>
-            <p><span class="font-medium">Keywords:</span> ${job.keywords || "N/A"}</p>
-          </div>
-
-          ${skills.length ? `
-          <div>
-            <div class="flex items-center gap-2 mb-3">
-              <i data-lucide="code" class="w-4 h-4"></i>
-              <span class="font-semibold text-gray-800">Skills Required</span>
-            </div>
-            <div class="flex flex-wrap gap-2">
-              ${skills.map(s => `<span class="skill-tag">${s}</span>`).join('')}
-            </div>
-          </div>` : ''}
-
-          <div>
-            <div class="flex items-center gap-2 mb-2">
-              <i data-lucide="file-text" class="w-4 h-4"></i>
-              <span class="font-semibold text-gray-800">Job Description</span>
-            </div>
-            <div class="job-description text-gray-700 leading-relaxed border rounded-lg p-4 bg-gray-50 text-sm max-h-64 overflow-y-auto">
-              ${formatJobDescription(job.description || "No description available.")}
-            </div>
-          </div>
-
-          ${job.company_about || job.company_url || job.company_stats ? `
-          <div class="border-t pt-4">
-            <div class="flex items-center gap-2 mb-2">
-              <i data-lucide="building-2" class="w-4 h-4"></i>
-              <span class="font-semibold text-gray-800">About ${job.company}</span>
-            </div>
-            <div class="text-gray-700 leading-relaxed bg-gray-50 border rounded-lg p-4">
-              ${job.company_about || "No company details available."}
-            </div>
-            ${job.company_stats ? `<p class="text-sm text-gray-500 mt-2">${job.company_stats}</p>` : ""}
-            ${job.company_url ? `<a href="${job.company_url}" target="_blank" class="inline-flex items-center gap-1 mt-3 text-indigo-600 hover:underline text-sm"><i data-lucide="external-link" class="w-4 h-4"></i> Company Profile</a>` : ""}
-          </div>` : ''}
-
-          <div class="border-t pt-4 flex gap-3">
-            <a href="${job.job_url}" target="_blank" class="flex-1 inline-flex justify-center items-center gap-2 bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 transition text-sm font-medium">
-              <i data-lucide="external-link" class="w-4 h-4"></i> Apply on LinkedIn
-            </a>
-            <button onclick="shareJob('${job.job_url}', '${job.title}', '${job.company}')" class="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-              <i data-lucide="share-2" class="w-4 h-4"></i>
-            </button>
-          </div>
-        </div>`;
-      
-      document.body.style.overflow = 'hidden';
-      lucide.createIcons();
-    }
-
-    function closeDrawer() {
-      document.getElementById("jobDrawer").classList.add("translate-x-full");
-      document.body.style.overflow = 'auto';
-    }
-
-    function shareJob(url, title, company) {
-      if (navigator.share) {
-        navigator.share({
-          title: title,
-          text: `Check out this job at ${company}`,
-          url: url
-        });
-      } else {
-        navigator.clipboard.writeText(url);
-        showToast('Job URL copied to clipboard!', 'success');
-      }
-    }
-
-    async function refreshJobs() {
-      await loadJobs();
-    }
-
-    function exportJobs() {
-      try {
-        const csvContent = convertToCSV(filteredJobs);
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = `jobs_export_${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        showToast('Jobs exported successfully!', 'success');
-      } catch (error) {
-        showToast('Failed to export jobs', 'error');
-      }
-    }
-
-    function convertToCSV(jobs) {
-      const headers = ['Title', 'Company', 'Location', 'Employment Type', 'Salary Range', 'Skills', 'Job URL'];
-      const rows = jobs.map(job => [
-        job.title,
-        job.company,
-        job.location,
-        job.employment_type,
-        job.salary_range || '',
-        job.extracted_skills || '',
-        job.job_url
-      ]);
-      
-      return [headers, ...rows]
-        .map(row => row.map(field => `"${(field || '').replace(/"/g, '""')}"`).join(','))
-        .join('\n');
-    }
-
-    function showToast(message, type = 'info') {
-      const toast = document.createElement('div');
-      const bgColor = {
-        success: 'bg-green-500',
-        error: 'bg-red-500',
-        info: 'bg-blue-500'
-      }[type] || 'bg-blue-500';
-      
-      toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg text-sm font-medium transform translate-x-0 transition-all duration-300`;
-      toast.textContent = message;
-      
-      document.getElementById('toastContainer').appendChild(toast);
-      
-      setTimeout(() => {
-        toast.style.transform = 'translateX(100%)';
-        setTimeout(() => toast.remove(), 300);
-      }, 3000);
-    }
-
     function formatJobDescription(description) {
       if (!description || description === "No description available.") {
         return description;
@@ -722,7 +978,7 @@
         'Benefits:', 'What we offer:', 'Compensation:', 'Package:',
         'Location:', 'Work arrangement:', 'Employment type:',
         'Roles & Responsibilities:', 'Job Specifications:', 'Main Interfaces:',
-        'Mission:', 'Vision:', 'Values:'
+        'Mission:', 'Vision:', 'Values:', 'About Danone Group:', 'About Danone India:'
       ];
       
       sectionHeaders.forEach(header => {
@@ -734,6 +990,46 @@
       // Format degree requirements and years of experience
       formatted = formatted.replace(/\b(Bachelor's|Master's|PhD|Degree in|B\.A\.|B\.S\.|M\.A\.|M\.S\.|Ph\.D\.)/gi, '\n\n**$1');
       formatted = formatted.replace(/\b(\d+\+?\s*years?\s+of\s+experience)/gi, '\n\n**$1**');
+      
+      // Convert list items that appear to be separate lines into bullet points
+      // Look for lines that start with a capital letter after periods or section breaks
+      const lines = formatted.split('\n');
+      const processedLines = [];
+      let inListSection = false;
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // Check if we're in a responsibilities or requirements section
+        if (line.includes('**Responsibilities:**') || line.includes('**Requirements:**') || 
+            line.includes('**Qualifications:**') || line.includes('**Skills:**') ||
+            line.includes('**Job Specifications:**') || line.includes('**Main Interfaces**')) {
+          inListSection = true;
+          processedLines.push(line);
+          continue;
+        }
+        
+        // Check if we're starting a new section
+        if (line.startsWith('**') && line.endsWith('**')) {
+          inListSection = false;
+          processedLines.push(line);
+          continue;
+        }
+        
+        // If we're in a list section and the line looks like a list item
+        if (inListSection && line && !line.startsWith('•') && !line.startsWith('**')) {
+          // Add bullet point if it's a substantial line
+          if (line.length > 10 && /^[A-Z]/.test(line)) {
+            processedLines.push('• ' + line);
+          } else {
+            processedLines.push(line);
+          }
+        } else {
+          processedLines.push(line);
+        }
+      }
+      
+      formatted = processedLines.join('\n');
       
       // Split into paragraphs and format
       const paragraphs = formatted.split('\n').filter(p => p.trim());
@@ -777,7 +1073,186 @@
       }).join('');
     }
 
+    function openDrawer(job) {
+      const drawer = document.getElementById("jobDrawer");
+      const content = document.getElementById("jobDrawerContent");
+      const title = document.getElementById("drawerTitle");
+      const subtitle = document.getElementById("drawerSubtitle");
+      
+      const skills = job.extracted_skills && job.extracted_skills !== 'N/A' 
+        ? job.extracted_skills.split(',').map(s => s.trim())
+        : [];
+      
+      const isManualEntry = job.keywords === 'manual_entry' || !job.scraped_at;
+
+      drawer.classList.remove("translate-x-full");
+      title.textContent = job.title;
+      subtitle.textContent = `${job.company} • ${job.location || 'Remote'}`;
+
+      content.innerHTML = `
+        <div class="max-w-3xl mx-auto space-y-8">
+          <div class="flex items-start gap-4">
+            <img src="${job.company_logo || '/static/default-logo.png'}" alt="Logo"
+              class="w-16 h-16 rounded object-contain border" onerror="this.src='/static/default-logo.png'"/>
+            <div class="flex-1">
+              <h1 class="text-2xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+                ${job.title}
+                ${isManualEntry ? '<span class="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">Manual Entry</span>' : ''}
+              </h1>
+              <p class="text-lg text-gray-700">${job.company}</p>
+              <p class="text-sm text-gray-500">${job.location || "N/A"} • ${job.posted_time || ""}</p>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 rounded-lg p-4 grid grid-cols-2 gap-3 text-sm text-gray-700">
+            <p><span class="font-medium">Employment Type:</span> ${job.employment_type || "N/A"}</p>
+            <p><span class="font-medium">Seniority Level:</span> ${job.seniority_level || "N/A"}</p>
+            <p><span class="font-medium">Job Function:</span> ${job.job_function || "N/A"}</p>
+            <p><span class="font-medium">Industries:</span> ${job.industries || "N/A"}</p>
+            ${job.salary_range && job.salary_range !== 'N/A' ? `
+            <p><span class="font-medium">Salary Range:</span> <span class="text-green-600 font-semibold">${job.salary_range}</span></p>
+            ` : ''}
+            ${job.applicant_count && job.applicant_count !== 'N/A' ? `
+            <p><span class="font-medium">Applicants:</span> ${job.applicant_count}</p>
+            ` : ''}
+            <p><span class="font-medium">Added:</span> ${job.scraped_at ? new Date(job.scraped_at).toLocaleString() : 'Manual entry'}</p>
+            <p><span class="font-medium">Keywords:</span> ${job.keywords === 'manual_entry' ? 'Manual Entry' : job.keywords || "N/A"}</p>
+          </div>
+
+          ${skills.length ? `
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <i data-lucide="code" class="w-4 h-4"></i>
+              <span class="font-semibold text-gray-800">Skills Required</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              ${skills.map(s => `<span class="skill-tag">${s}</span>`).join('')}
+            </div>
+          </div>` : ''}
+
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <i data-lucide="file-text" class="w-4 h-4"></i>
+              <span class="font-semibold text-gray-800">Job Description</span>
+            </div>
+            <div class="job-description text-gray-700 leading-relaxed border rounded-lg p-4 bg-gray-50 text-sm max-h-64 overflow-y-auto">
+              ${formatJobDescription(job.description || "No description available.")}
+            </div>
+          </div>
+
+          ${job.company_about || job.company_url || job.company_stats ? `
+          <div class="border-t pt-4">
+            <div class="flex items-center gap-2 mb-2">
+              <i data-lucide="building-2" class="w-4 h-4"></i>
+              <span class="font-semibold text-gray-800">About ${job.company}</span>
+            </div>
+            <div class="text-gray-700 leading-relaxed bg-gray-50 border rounded-lg p-4">
+              ${job.company_about || "No company details available."}
+            </div>
+            ${job.company_stats ? `<p class="text-sm text-gray-500 mt-2">${job.company_stats}</p>` : ""}
+            ${job.company_url ? `<a href="${job.company_url}" target="_blank" class="inline-flex items-center gap-1 mt-3 text-indigo-600 hover:underline text-sm"><i data-lucide="external-link" class="w-4 h-4"></i> Company Profile</a>` : ""}
+          </div>` : ''}
+
+          <div class="border-t pt-4 flex gap-3">
+            ${job.job_url ? `
+            <a href="${job.job_url}" target="_blank" class="flex-1 inline-flex justify-center items-center gap-2 bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 transition text-sm font-medium">
+              <i data-lucide="external-link" class="w-4 h-4"></i> Apply Now
+            </a>
+            ` : `
+            <div class="flex-1 inline-flex justify-center items-center gap-2 bg-gray-300 text-gray-500 px-4 py-3 rounded-lg text-sm font-medium cursor-not-allowed">
+              <i data-lucide="link-off" class="w-4 h-4"></i> No Application Link
+            </div>
+            `}
+            <button onclick="shareJob('${job.job_url || '#'}', '${job.title}', '${job.company}')" class="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+              <i data-lucide="share-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>`;
+      
+      document.body.style.overflow = 'hidden';
+      lucide.createIcons();
+    }
+
+    function closeDrawer() {
+      document.getElementById("jobDrawer").classList.add("translate-x-full");
+      document.body.style.overflow = 'auto';
+    }
+
+    function shareJob(url, title, company) {
+      if (navigator.share) {
+        navigator.share({
+          title: title,
+          text: `Check out this job at ${company}`,
+          url: url
+        });
+      } else {
+        navigator.clipboard.writeText(url || window.location.href);
+        showToast('Job link copied to clipboard!', 'success');
+      }
+    }
+
+    async function refreshJobs() {
+      await loadJobs();
+    }
+
+    function exportJobs() {
+      try {
+        const csvContent = convertToCSV(filteredJobs);
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `jobs_export_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        showToast('Jobs exported successfully!', 'success');
+      } catch (error) {
+        showToast('Failed to export jobs', 'error');
+      }
+    }
+
+    function convertToCSV(jobs) {
+      const headers = ['Title', 'Company', 'Location', 'Employment Type', 'Salary Range', 'Skills', 'Job URL', 'Source'];
+      const rows = jobs.map(job => [
+        job.title,
+        job.company,
+        job.location,
+        job.employment_type,
+        job.salary_range || '',
+        job.extracted_skills || '',
+        job.job_url || '',
+        job.keywords === 'manual_entry' ? 'Manual' : 'Scraped'
+      ]);
+      
+      return [headers, ...rows]
+        .map(row => row.map(field => `"${(field || '').replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      const bgColor = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500'
+      }[type] || 'bg-blue-500';
+      
+      toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg text-sm font-medium transform translate-x-0 transition-all duration-300`;
+      toast.textContent = message;
+      
+      document.getElementById('toastContainer').appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
     function getTimeAgo(dateString) {
+      if (!dateString) return 'Just added';
+      
       const date = new Date(dateString);
       const now = new Date();
       const diffTime = Math.abs(now - date);
@@ -811,10 +1286,15 @@
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
         closeDrawer();
+        closeAddJobModal();
       }
       if (e.key === '/' && e.target.tagName !== 'INPUT') {
         e.preventDefault();
         document.getElementById('searchInput').focus();
+      }
+      if (e.ctrlKey && e.key === 'n') {
+        e.preventDefault();
+        openAddJobModal();
       }
     });
 

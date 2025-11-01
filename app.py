@@ -283,6 +283,11 @@
 
 
 
+#!/usr/bin/env python3
+"""
+Enhanced Flask app with Add New Job functionality
+"""
+
 import os
 import sys
 import json
@@ -358,20 +363,6 @@ def scrape_jobs():
         'job_id': job_id,
         'message': 'Improved scraping job started'
     })
-
-@app.route('/api/status/<job_id>', methods=['GET'])
-def job_status(job_id):
-    """Get scraping job status"""
-    if job_id not in active_jobs:
-        return jsonify({'success': False, 'error': 'Job not found'}), 404
-    return jsonify({'success': True, 'status': active_jobs[job_id]})
-
-@app.route('/api/results/<job_id>', methods=['GET'])
-def job_results_api(job_id):
-    """Get completed job results"""
-    if job_id not in job_results:
-        return jsonify({'success': False, 'error': 'Results not found'}), 404
-    return jsonify({'success': True, 'results': job_results[job_id]})
 
 def run_improved_scraper(job_id, keywords, location, limit, experience, job_type, headless, slow_mode):
     """Run improved LinkedIn scraper in a thread"""
@@ -474,6 +465,20 @@ def run_improved_scraper(job_id, keywords, location, limit, experience, job_type
                 'message': f'Error: {str(e)}'
             })
         print(f"❌ Error in job {job_id}: {e}")
+
+@app.route('/api/status/<job_id>', methods=['GET'])
+def job_status(job_id):
+    """Get scraping job status"""
+    if job_id not in active_jobs:
+        return jsonify({'success': False, 'error': 'Job not found'}), 404
+    return jsonify({'success': True, 'status': active_jobs[job_id]})
+
+@app.route('/api/results/<job_id>', methods=['GET'])
+def job_results_api(job_id):
+    """Get completed job results"""
+    if job_id not in job_results:
+        return jsonify({'success': False, 'error': 'Results not found'}), 404
+    return jsonify({'success': True, 'results': job_results[job_id]})
 
 @app.route('/downloads/<filename>')
 def download_file(filename):
@@ -596,8 +601,75 @@ def get_all_jobs():
     except Exception as e:
         print(f"❌ Error fetching jobs: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
-    
-    
+
+@app.route('/api/jobs', methods=['POST'])
+def add_new_job():
+    """Add a new job manually to the database"""
+    try:
+        data = request.json
+        
+        # Validate required fields
+        required_fields = ['title', 'company', 'location', 'description']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({
+                    'success': False, 
+                    'error': f'{field.title()} is required'
+                }), 400
+        
+        # Prepare job data
+        job_data = {
+            'title': data.get('title'),
+            'company': data.get('company'),
+            'location': data.get('location'),
+            'posted_time': data.get('posted_time', datetime.now().strftime('%Y-%m-%d')),
+            'description': data.get('description'),
+            'employment_type': data.get('employment_type'),
+            'seniority_level': data.get('seniority_level'),
+            'industries': data.get('industries'),
+            'job_function': data.get('job_function'),
+            'company_url': data.get('company_url'),
+            'company_logo': data.get('company_logo'),
+            'company_about': data.get('company_about'),
+            'company_stats': data.get('company_stats', ''),
+            'job_url': data.get('job_url', ''),
+            'extracted_skills': data.get('extracted_skills'),
+            'salary_range': data.get('salary_range'),
+            'applicant_count': data.get('applicant_count'),
+        }
+        
+        # Search parameters for manual entries
+        search_params = {
+            'keywords': 'manual_entry',
+            'location': data.get('location'),
+            'limit': 1,
+            'experience_level': data.get('seniority_level'),
+            'job_type': data.get('employment_type')
+        }
+        
+        # Save to database
+        success = db.save_jobs([job_data], search_params)
+        
+        if success:
+            print(f"✅ Manual job added: {job_data['title']} at {job_data['company']}")
+            return jsonify({
+                'success': True, 
+                'message': 'Job added successfully',
+                'job': job_data
+            }), 201
+        else:
+            return jsonify({
+                'success': False, 
+                'error': 'Failed to save job to database'
+            }), 500
+            
+    except Exception as e:
+        print(f"❌ Error adding job: {e}")
+        return jsonify({
+            'success': False, 
+            'error': f'Server error: {str(e)}'
+        }), 500
+
 @app.route('/marketplace')
 def marketplace_jobs():
     """Serve the Marketplace Jobs page"""
@@ -610,8 +682,9 @@ def scraper_page():
 
 if __name__ == '__main__':
     os.makedirs('static/downloads', exist_ok=True)
-    print("🚀 Starting Improved LinkedIn Job Scraper")
+    print("🚀 Starting Enhanced LinkedIn Job Scraper with Manual Job Entry")
     print("🌐 Web Interface: http://localhost:5000")
     print("📊 Enhanced scraping with better accuracy and data extraction")
+    print("➕ Manual job entry feature available")
     print(f"🗄️ Database: {os.getenv('DB_NAME', 'SQLite')} ({os.getenv('DB_HOST', 'local')}:{os.getenv('DB_PORT', 'N/A')})")
     app.run(host='0.0.0.0', port=5000, debug=True)
