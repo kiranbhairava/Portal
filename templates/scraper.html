@@ -98,8 +98,8 @@
 </head>
 <body class="bg-gray-100">
   <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <aside class="w-64 bg-gray-900 text-gray-100 flex flex-col p-6 space-y-6">
+    <!-- Sidebar - Fixed -->
+    <aside class="fixed left-0 top-0 h-full w-64 bg-gray-900 text-gray-100 flex flex-col p-6 space-y-6 z-40 overflow-y-auto">
       <div class="flex items-center gap-2 text-xl font-semibold">
         <i data-lucide="briefcase" class="w-5 h-5"></i>
         <span>Job Portal</span>
@@ -114,7 +114,7 @@
       </nav>
       
       <!-- Tips Section -->
-      <div class="mt-8 pt-6 border-t border-gray-700">
+      <!-- <div class="mt-8 pt-6 border-t border-gray-700">
         <h3 class="text-sm font-semibold text-gray-300 mb-3">💡 Pro Tips</h3>
         <ul class="space-y-2 text-xs text-gray-400">
           <li>• Use specific job titles for better results</li>
@@ -122,312 +122,314 @@
           <li>• Larger limits take more time but provide more data</li>
           <li>• Enhanced scraper extracts skills and salary info</li>
         </ul>
-      </div>
+      </div> -->
     </aside>
 
-    <!-- Main content -->
-    <main class="flex-1 p-10 bg-gray-50">
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-8">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <i data-lucide="search" class="w-8 h-8 text-indigo-600"></i> 
-            LinkedIn Job Scraper
-          </h1>
-          <p class="text-gray-600 mt-2">Extract comprehensive job data with enhanced accuracy and detailed information</p>
-        </div>
-        
-        <!-- Status Indicator -->
-        <div class="flex items-center gap-2 text-sm">
-          <div class="w-2 h-2 bg-green-500 rounded-full pulse-dot"></div>
-          <span class="text-gray-600">System Ready</span>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <!-- Scraper Form -->
-        <div class="lg:col-span-2">
-          <div class="floating-card bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
-            <div class="flex items-center justify-between mb-6">
-              <h2 class="text-xl font-semibold text-gray-900">Configure Scraper</h2>
-              <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-medium">Enhanced Mode</span>
-            </div>
-            
-            <form id="scrapeForm" class="space-y-6">
-              <!-- Basic Fields -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label class="block text-sm font-semibold text-gray-700 mb-2">
-                    <i data-lucide="search" class="w-4 h-4 inline mr-1"></i>
-                    Job Keywords
-                  </label>
-                  <input 
-                    type="text" 
-                    name="keywords" 
-                    required 
-                    class="form-input w-full rounded-lg px-4 py-3"
-                    placeholder="e.g. Python Developer, Data Scientist"
-                    autocomplete="off"
-                  >
-                  <p class="text-xs text-gray-500 mt-1">Specific job titles work best</p>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-semibold text-gray-700 mb-2">
-                    <i data-lucide="map-pin" class="w-4 h-4 inline mr-1"></i>
-                    Location
-                  </label>
-                  <input 
-                    type="text" 
-                    name="location" 
-                    required 
-                    class="form-input w-full rounded-lg px-4 py-3"
-                    placeholder="e.g. Bengaluru, India or Remote"
-                    autocomplete="off"
-                  >
-                  <p class="text-xs text-gray-500 mt-1">City, country, or "Remote"</p>
-                </div>
-              </div>
-
-              <!-- Advanced Options -->
-              <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <i data-lucide="settings" class="w-5 h-5 mr-2"></i>
-                  Advanced Options
-                </h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                      Job Limit
-                      <span class="tooltip" data-tooltip="More jobs = longer scraping time">
-                        <i data-lucide="help-circle" class="w-3 h-3 inline ml-1 text-gray-400"></i>
-                      </span>
-                    </label>
-                    <select name="limit" class="form-input w-full rounded-lg px-3 py-2">
-                      <option value="10">10 jobs (Quick)</option>
-                      <option value="25" selected>25 jobs (Recommended)</option>
-                      <option value="50">50 jobs (Detailed)</option>
-                      <option value="100">100 jobs (Comprehensive)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Experience Level</label>
-                    <select name="experience" class="form-input w-full rounded-lg px-3 py-2">
-                      <option value="">Any Level</option>
-                      <option value="internship">Internship</option>
-                      <option value="entry_level">Entry Level</option>
-                      <option value="associate">Associate</option>
-                      <option value="mid_senior">Mid-Senior</option>
-                      <option value="director">Director</option>
-                      <option value="executive">Executive</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Job Type</label>
-                    <select name="job_type" class="form-input w-full rounded-lg px-3 py-2">
-                      <option value="">Any Type</option>
-                      <option value="full_time">Full-time</option>
-                      <option value="part_time">Part-time</option>
-                      <option value="contract">Contract</option>
-                      <option value="temporary">Temporary</option>
-                      <option value="volunteer">Volunteer</option>
-                      <option value="internship">Internship</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <!-- Scraper Settings -->
-                <div class="mt-6 pt-6 border-t border-gray-200">
-                  <h4 class="text-sm font-semibold text-gray-700 mb-3">Scraper Settings</h4>
-                  <div class="flex flex-wrap gap-6">
-                    <label class="flex items-center">
-                      <input type="checkbox" name="headless" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                      <span class="ml-2 text-sm text-gray-700">Headless Mode (Faster)</span>
-                    </label>
-                    <label class="flex items-center">
-                      <input type="checkbox" name="fast" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                      <span class="ml-2 text-sm text-gray-700">Fast Mode (Less Human-like)</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Submit Button -->
-              <button 
-                type="submit" 
-                id="submitBtn"
-                class="gradient-button w-full text-white font-semibold py-4 px-6 rounded-xl transition duration-200 flex items-center justify-center space-x-3 shadow-lg"
-              >
-                <i data-lucide="rocket" class="w-5 h-5"></i>
-                <span>Start Enhanced Scraping</span>
-              </button>
-            </form>
+    <!-- Main content - Scrollable with left margin to account for fixed sidebar -->
+    <main class="flex-1 ml-64 h-screen overflow-y-auto">
+      <div class="p-10 bg-gray-50">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <i data-lucide="search" class="w-8 h-8 text-indigo-600"></i> 
+              LinkedIn Job Scraper
+            </h1>
+            <p class="text-gray-600 mt-2">Extract comprehensive job data with enhanced accuracy and detailed information</p>
           </div>
-        </div>
-
-        <!-- Status Panel -->
-        <div class="space-y-6">
           
-          <!-- Current Status -->
-          <div id="statusPanel" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hidden">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold text-gray-900">Scraping Progress</h3>
-              <button onclick="cancelJob()" class="text-red-600 hover:text-red-800 text-sm font-medium">
-                Cancel
-              </button>
-            </div>
-            
-            <!-- Progress Bar -->
-            <div class="mb-6">
-              <div class="flex items-center justify-between text-sm text-gray-700 mb-2">
-                <span>Progress</span>
-                <span id="progressText">0%</span>
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-3">
-                <div id="progressBar" class="progress-bar h-3 rounded-full" style="width: 0%"></div>
-              </div>
-            </div>
-            
-            <!-- Status Message -->
-            <div id="currentStatus" class="status-card rounded-lg p-4 mb-4">
-              <div class="flex items-center space-x-3">
-                <div class="pulse-dot w-3 h-3 bg-indigo-600 rounded-full"></div>
-                <span id="statusMessage" class="text-sm font-medium text-gray-700">Initializing...</span>
-              </div>
-            </div>
-            
-            <!-- Job Details -->
-            <div class="text-sm text-gray-600 space-y-1">
-              <p><span class="font-medium">Job ID:</span> <span id="jobId" class="font-mono">--</span></p>
-              <p><span class="font-medium">Keywords:</span> <span id="jobKeywords">--</span></p>
-              <p><span class="font-medium">Location:</span> <span id="jobLocation">--</span></p>
-              <p><span class="font-medium">Started:</span> <span id="jobStartTime">--</span></p>
-            </div>
+          <!-- Status Indicator -->
+          <div class="flex items-center gap-2 text-sm">
+            <div class="w-2 h-2 bg-green-500 rounded-full pulse-dot"></div>
+            <span class="text-gray-600">System Ready</span>
           </div>
+        </div>
 
-          <!-- Results Panel -->
-          <div id="resultsPanel" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hidden">
-            <div class="flex items-center space-x-3 mb-4">
-              <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <i data-lucide="check" class="w-4 h-4 text-green-600"></i>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          <!-- Scraper Form -->
+          <div class="lg:col-span-2">
+            <div class="floating-card bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
+              <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-gray-900">Configure Scraper</h2>
+                <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-medium">Enhanced Mode</span>
               </div>
-              <h3 class="text-lg font-semibold text-gray-900">Scraping Complete!</h3>
-            </div>
-            
-            <!-- Enhanced Results Summary -->
-            <div id="resultsSummary" class="success-card rounded-lg p-4 mb-4">
-              <div class="grid grid-cols-2 gap-4 text-center">
-                <div>
-                  <div class="text-2xl font-bold text-green-600" id="totalJobsFound">0</div>
-                  <div class="text-xs text-gray-600">Jobs Found</div>
-                </div>
-                <div>
-                  <div class="text-2xl font-bold text-blue-600" id="jobsWithSkills">0</div>
-                  <div class="text-xs text-gray-600">With Skills</div>
-                </div>
-                <div>
-                  <div class="text-2xl font-bold text-purple-600" id="companiesFound">0</div>
-                  <div class="text-xs text-gray-600">Companies</div>
-                </div>
-                <div>
-                  <div class="text-2xl font-bold text-orange-600" id="jobsWithSalary">0</div>
-                  <div class="text-xs text-gray-600">With Salary</div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Action Buttons -->
-            <div class="space-y-3">
-              <button 
-                onclick="viewResults()" 
-                class="w-full bg-indigo-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-indigo-700 transition flex items-center justify-center space-x-2"
-              >
-                <i data-lucide="eye" class="w-4 h-4"></i>
-                <span>View Jobs in Marketplace</span>
-              </button>
               
-              <div class="grid grid-cols-2 gap-3">
+              <form id="scrapeForm" class="space-y-6">
+                <!-- Basic Fields -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                      <i data-lucide="search" class="w-4 h-4 inline mr-1"></i>
+                      Job Keywords
+                    </label>
+                    <input 
+                      type="text" 
+                      name="keywords" 
+                      required 
+                      class="form-input w-full rounded-lg px-4 py-3"
+                      placeholder="e.g. Python Developer, Data Scientist"
+                      autocomplete="off"
+                    >
+                    <p class="text-xs text-gray-500 mt-1">Specific job titles work best</p>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                      <i data-lucide="map-pin" class="w-4 h-4 inline mr-1"></i>
+                      Location
+                    </label>
+                    <input 
+                      type="text" 
+                      name="location" 
+                      required 
+                      class="form-input w-full rounded-lg px-4 py-3"
+                      placeholder="e.g. Bengaluru, India or Remote"
+                      autocomplete="off"
+                    >
+                    <p class="text-xs text-gray-500 mt-1">City, country, or "Remote"</p>
+                  </div>
+                </div>
+
+                <!-- Advanced Options -->
+                <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i data-lucide="settings" class="w-5 h-5 mr-2"></i>
+                    Advanced Options
+                  </h3>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Job Limit
+                        <span class="tooltip" data-tooltip="More jobs = longer scraping time">
+                          <i data-lucide="help-circle" class="w-3 h-3 inline ml-1 text-gray-400"></i>
+                        </span>
+                      </label>
+                      <select name="limit" class="form-input w-full rounded-lg px-3 py-2">
+                        <option value="10">10 jobs (Quick)</option>
+                        <option value="25" selected>25 jobs (Recommended)</option>
+                        <option value="50">50 jobs (Detailed)</option>
+                        <option value="100">100 jobs (Comprehensive)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Experience Level</label>
+                      <select name="experience" class="form-input w-full rounded-lg px-3 py-2">
+                        <option value="">Any Level</option>
+                        <option value="internship">Internship</option>
+                        <option value="entry_level">Entry Level</option>
+                        <option value="associate">Associate</option>
+                        <option value="mid_senior">Mid-Senior</option>
+                        <option value="director">Director</option>
+                        <option value="executive">Executive</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Job Type</label>
+                      <select name="job_type" class="form-input w-full rounded-lg px-3 py-2">
+                        <option value="">Any Type</option>
+                        <option value="full_time">Full-time</option>
+                        <option value="part_time">Part-time</option>
+                        <option value="contract">Contract</option>
+                        <option value="temporary">Temporary</option>
+                        <option value="volunteer">Volunteer</option>
+                        <option value="internship">Internship</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <!-- Scraper Settings -->
+                  <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Scraper Settings</h4>
+                    <div class="flex flex-wrap gap-6">
+                      <label class="flex items-center">
+                        <input type="checkbox" name="headless" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="ml-2 text-sm text-gray-700">Headless Mode (Faster)</span>
+                      </label>
+                      <label class="flex items-center">
+                        <input type="checkbox" name="fast" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="ml-2 text-sm text-gray-700">Fast Mode (Less Human-like)</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Submit Button -->
                 <button 
-                  onclick="downloadCSV()" 
-                  class="bg-green-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-green-700 transition flex items-center justify-center space-x-1 text-sm"
+                  type="submit" 
+                  id="submitBtn"
+                  class="gradient-button w-full text-white font-semibold py-4 px-6 rounded-xl transition duration-200 flex items-center justify-center space-x-3 shadow-lg"
                 >
-                  <i data-lucide="download" class="w-4 h-4"></i>
-                  <span>CSV</span>
+                  <i data-lucide="rocket" class="w-5 h-5"></i>
+                  <span>Start Enhanced Scraping</span>
                 </button>
-                <button 
-                  onclick="downloadExcel()" 
-                  class="bg-blue-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-blue-700 transition flex items-center justify-center space-x-1 text-sm"
-                >
-                  <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-                  <span>Excel</span>
+              </form>
+            </div>
+          </div>
+
+          <!-- Status Panel -->
+          <div class="space-y-6">
+            
+            <!-- Current Status -->
+            <div id="statusPanel" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hidden">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Scraping Progress</h3>
+                <button onclick="cancelJob()" class="text-red-600 hover:text-red-800 text-sm font-medium">
+                  Cancel
                 </button>
               </div>
-            </div>
-          </div>
-
-          <!-- Error Panel -->
-          <div id="errorPanel" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hidden">
-            <div class="flex items-center space-x-3 mb-4">
-              <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <i data-lucide="alert-circle" class="w-4 h-4 text-red-600"></i>
+              
+              <!-- Progress Bar -->
+              <div class="mb-6">
+                <div class="flex items-center justify-between text-sm text-gray-700 mb-2">
+                  <span>Progress</span>
+                  <span id="progressText">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                  <div id="progressBar" class="progress-bar h-3 rounded-full" style="width: 0%"></div>
+                </div>
               </div>
-              <h3 class="text-lg font-semibold text-gray-900">Scraping Failed</h3>
+              
+              <!-- Status Message -->
+              <div id="currentStatus" class="status-card rounded-lg p-4 mb-4">
+                <div class="flex items-center space-x-3">
+                  <div class="pulse-dot w-3 h-3 bg-indigo-600 rounded-full"></div>
+                  <span id="statusMessage" class="text-sm font-medium text-gray-700">Initializing...</span>
+                </div>
+              </div>
+              
+              <!-- Job Details -->
+              <div class="text-sm text-gray-600 space-y-1">
+                <p><span class="font-medium">Job ID:</span> <span id="jobId" class="font-mono">--</span></p>
+                <p><span class="font-medium">Keywords:</span> <span id="jobKeywords">--</span></p>
+                <p><span class="font-medium">Location:</span> <span id="jobLocation">--</span></p>
+                <p><span class="font-medium">Started:</span> <span id="jobStartTime">--</span></p>
+              </div>
             </div>
-            
-            <div class="error-card rounded-lg p-4 mb-4">
-              <p id="errorMessage" class="text-sm text-red-700"></p>
+
+            <!-- Results Panel -->
+            <div id="resultsPanel" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hidden">
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <i data-lucide="check" class="w-4 h-4 text-green-600"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900">Scraping Complete!</h3>
+              </div>
+              
+              <!-- Enhanced Results Summary -->
+              <div id="resultsSummary" class="success-card rounded-lg p-4 mb-4">
+                <div class="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <div class="text-2xl font-bold text-green-600" id="totalJobsFound">0</div>
+                    <div class="text-xs text-gray-600">Jobs Found</div>
+                  </div>
+                  <div>
+                    <div class="text-2xl font-bold text-blue-600" id="jobsWithSkills">0</div>
+                    <div class="text-xs text-gray-600">With Skills</div>
+                  </div>
+                  <div>
+                    <div class="text-2xl font-bold text-purple-600" id="companiesFound">0</div>
+                    <div class="text-xs text-gray-600">Companies</div>
+                  </div>
+                  <div>
+                    <div class="text-2xl font-bold text-orange-600" id="jobsWithSalary">0</div>
+                    <div class="text-xs text-gray-600">With Salary</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Action Buttons -->
+              <div class="space-y-3">
+                <button 
+                  onclick="viewResults()" 
+                  class="w-full bg-indigo-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-indigo-700 transition flex items-center justify-center space-x-2"
+                >
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                  <span>View Jobs in Marketplace</span>
+                </button>
+                
+                <div class="grid grid-cols-2 gap-3">
+                  <button 
+                    onclick="downloadCSV()" 
+                    class="bg-green-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-green-700 transition flex items-center justify-center space-x-1 text-sm"
+                  >
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>CSV</span>
+                  </button>
+                  <button 
+                    onclick="downloadExcel()" 
+                    class="bg-blue-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-blue-700 transition flex items-center justify-center space-x-1 text-sm"
+                  >
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                    <span>Excel</span>
+                  </button>
+                </div>
+              </div>
             </div>
-            
-            <button 
-              onclick="resetForm()" 
-              class="w-full bg-gray-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-gray-700 transition"
-            >
-              Try Again
-            </button>
-          </div>
 
-          <!-- Info Panel -->
-          <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <i data-lucide="info" class="w-5 h-5 mr-2 text-blue-500"></i>
-              Enhanced Features
-            </h3>
-            <ul class="space-y-2 text-sm text-gray-700">
-              <li class="flex items-start space-x-2">
-                <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
-                <span>Automatic skill extraction from job descriptions</span>
-              </li>
-              <li class="flex items-start space-x-2">
-                <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
-                <span>Salary range detection and parsing</span>
-              </li>
-              <li class="flex items-start space-x-2">
-                <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
-                <span>Company information and logos</span>
-              </li>
-              <li class="flex items-start space-x-2">
-                <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
-                <span>Applicant count when available</span>
-              </li>
-              <li class="flex items-start space-x-2">
-                <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
-                <span>Anti-detection measures for reliability</span>
-              </li>
-            </ul>
-          </div>
+            <!-- Error Panel -->
+            <div id="errorPanel" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hidden">
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <i data-lucide="alert-circle" class="w-4 h-4 text-red-600"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900">Scraping Failed</h3>
+              </div>
+              
+              <div class="error-card rounded-lg p-4 mb-4">
+                <p id="errorMessage" class="text-sm text-red-700"></p>
+              </div>
+              
+              <button 
+                onclick="resetForm()" 
+                class="w-full bg-gray-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-gray-700 transition"
+              >
+                Try Again
+              </button>
+            </div>
 
-          <!-- Recent Activity -->
-          <div id="recentActivity" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <i data-lucide="clock" class="w-5 h-5 mr-2"></i>
-              Recent Scrapes
-            </h3>
-            <div id="recentList" class="space-y-3">
-              <p class="text-sm text-gray-500 text-center py-4">No recent scrapes</p>
+            <!-- Info Panel -->
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i data-lucide="info" class="w-5 h-5 mr-2 text-blue-500"></i>
+                Enhanced Features
+              </h3>
+              <ul class="space-y-2 text-sm text-gray-700">
+                <li class="flex items-start space-x-2">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
+                  <span>Automatic skill extraction from job descriptions</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
+                  <span>Salary range detection and parsing</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
+                  <span>Company information and logos</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
+                  <span>Applicant count when available</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
+                  <span>Anti-detection measures for reliability</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Recent Activity -->
+            <div id="recentActivity" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i data-lucide="clock" class="w-5 h-5 mr-2"></i>
+                Recent Scrapes
+              </h3>
+              <div id="recentList" class="space-y-3">
+                <p class="text-sm text-gray-500 text-center py-4">No recent scrapes</p>
+              </div>
             </div>
           </div>
         </div>

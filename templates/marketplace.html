@@ -136,27 +136,12 @@
       background: rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(4px);
     }
-    
-    .floating-add-btn {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      z-index: 30;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
-      transition: all 0.2s ease;
-    }
-    
-    .floating-add-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 15px 35px rgba(16, 185, 129, 0.4);
-    }
   </style>
 </head>
 <body class="bg-gray-100">
   <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <aside class="w-64 bg-gray-900 text-gray-100 flex flex-col p-6 space-y-6">
+    <!-- Sidebar - Fixed -->
+    <aside class="fixed left-0 top-0 h-full w-64 bg-gray-900 text-gray-100 flex flex-col p-6 space-y-6 z-40 overflow-y-auto">
       <div class="flex items-center gap-2 text-xl font-semibold">
         <i data-lucide="briefcase" class="w-5 h-5"></i>
         <span>Job Portal</span>
@@ -189,20 +174,12 @@
         </div>
       </div>
 
-      <!-- Add Job Button in Sidebar -->
-      <div class="mt-8 pt-6 border-t border-gray-700">
-        <button 
-          onclick="openAddJobModal()" 
-          class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2"
-        >
-          <i data-lucide="plus" class="w-4 h-4"></i>
-          Add New Job
-        </button>
-      </div>
+
     </aside>
 
-    <!-- Main content -->
-    <main class="flex-1 p-10">
+    <!-- Main content - Scrollable with left margin to account for fixed sidebar -->
+    <main class="flex-1 ml-64 h-screen overflow-y-auto">
+      <div class="p-10">
       <!-- Header with Search -->
       <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 gap-4">
         <h1 class="text-2xl font-semibold text-gray-900 flex items-center gap-2">
@@ -220,6 +197,14 @@
               class="search-input pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none w-64"
             >
           </div>
+          <button 
+            onclick="openAddJobModal()" 
+            class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition flex items-center gap-2"
+            title="Add new job manually"
+          >
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            Add Job
+          </button>
           <button 
             onclick="refreshJobs()" 
             class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition"
@@ -269,17 +254,11 @@
           <i data-lucide="briefcase" class="w-8 h-8 text-gray-400"></i>
         </div>
         <h3 class="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
-        <p class="text-gray-500 mb-4">Try adjusting your search or add/scrape new jobs.</p>
-        <div class="flex justify-center gap-3">
-          <button onclick="openAddJobModal()" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-            <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
-            Add New Job
-          </button>
-          <a href="/scraper" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
-            <i data-lucide="search" class="w-4 h-4 mr-2"></i>
-            Scrape Jobs
-          </a>
-        </div>
+        <p class="text-gray-500 mb-4">Try adjusting your search, use the "Add Job" button above, or scrape new jobs.</p>
+        <a href="/scraper" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+          <i data-lucide="search" class="w-4 h-4 mr-2"></i>
+          Scrape Jobs
+        </a>
       </div>
 
       <!-- Pagination -->
@@ -304,17 +283,11 @@
           </button>
         </div>
       </div>
+      </div>
     </main>
   </div>
 
-  <!-- Floating Add Button -->
-  <button 
-    onclick="openAddJobModal()" 
-    class="floating-add-btn w-16 h-16 text-white rounded-full flex items-center justify-center"
-    title="Add New Job"
-  >
-    <i data-lucide="plus" class="w-6 h-6"></i>
-  </button>
+
 
   <!-- Add Job Modal -->
   <div id="addJobModal" class="fixed inset-0 z-50 hidden">

@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard | Job Portal Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    
+    .stat-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .chart-container {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border: 1px solid #e2e8f0;
+    }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .skill-tag {
+      background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+      color: #374151;
+      border: 1px solid #d1d5db;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      margin: 2px;
+      transition: all 0.2s ease;
+    }
+    
+    .skill-tag:hover {
+      background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+      transform: translateY(-1px);
+    }
+    
+    .trend-up {
+      color: #10b981;
+    }
+    
+    .trend-down {
+      color: #ef4444;
+    }
+    
+    .loading-shimmer {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+    }
+    
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    .activity-item {
+      transition: all 0.2s ease;
+    }
+    
+    .activity-item:hover {
+      background-color: #f9fafb;
+      transform: translateX(4px);
+    }
+    
+    .refresh-button {
+      transition: all 0.2s ease;
+    }
+    
+    .refresh-button:hover {
+      transform: rotate(180deg);
+    }
+    
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    @media (max-width: 768px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <div class="flex min-h-screen">
+    <!-- Sidebar - Fixed -->
+    <aside class="fixed left-0 top-0 h-full w-64 bg-gray-900 text-gray-100 flex flex-col p-6 space-y-6 z-40 overflow-y-auto">
+      <div class="flex items-center gap-2 text-xl font-semibold">
+        <i data-lucide="briefcase" class="w-5 h-5"></i>
+        <span>Job Portal</span>
+      </div>
+      <nav class="flex flex-col space-y-2 text-sm font-medium">
+        <a href="#" class="flex items-center gap-2 px-3 py-2 rounded bg-gray-800">
+          <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Dashboard
+        </a>
+        <a href="/marketplace" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800">
+          <i data-lucide="layout-list" class="w-4 h-4"></i> Marketplace Jobs
+        </a>
+        <a href="/scraper" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800">
+          <i data-lucide="search" class="w-4 h-4"></i> Scraper
+        </a>
+      </nav>
+      
+      <!-- Quick Actions -->
+      <div class="mt-8 pt-6 border-t border-gray-700">
+        <h3 class="text-sm font-semibold text-gray-300 mb-3">Quick Actions</h3>
+        <div class="space-y-2">
+          <button onclick="refreshDashboard()" class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded transition">
+            <i data-lucide="refresh-cw" class="w-4 h-4 refresh-button"></i>
+            Refresh Data
+          </button>
+          <a href="/marketplace" class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            Add New Job
+          </a>
+          <a href="/scraper" class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded transition">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            Scrape Jobs
+          </a>
+        </div>
+      </div>
+
+      <!-- System Status -->
+      <div class="mt-8 pt-6 border-t border-gray-700">
+        <h3 class="text-sm font-semibold text-gray-300 mb-3">System Status</h3>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-400">Database:</span>
+            <span class="flex items-center gap-1 text-green-400">
+              <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+              Online
+            </span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-400">Scraper:</span>
+            <span class="flex items-center gap-1 text-green-400">
+              <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+              Ready
+            </span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-400">Last Update:</span>
+            <span id="lastUpdate" class="text-gray-300">--</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main content - Scrollable with left margin to account for fixed sidebar -->
+    <main class="flex-1 ml-64 h-screen overflow-y-auto">
+      <div class="p-8">
+        <!-- Header -->
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-8">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <i data-lucide="bar-chart-3" class="w-8 h-8 text-indigo-600"></i>
+              Dashboard
+            </h1>
+            <p class="text-gray-600 mt-2">Comprehensive analytics and insights from your job data</p>
+          </div>
+          
+          <!-- Time Range Selector -->
+          <div class="flex items-center gap-3 mt-4 lg:mt-0">
+            <select id="timeRange" class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="all">All time</option>
+            </select>
+            
+            <button onclick="exportReport()" class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              Export Report
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="loading-shimmer h-32 rounded-2xl"></div>
+            <div class="loading-shimmer h-32 rounded-2xl"></div>
+            <div class="loading-shimmer h-32 rounded-2xl"></div>
+            <div class="loading-shimmer h-32 rounded-2xl"></div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="loading-shimmer h-80 rounded-2xl"></div>
+            <div class="loading-shimmer h-80 rounded-2xl"></div>
+          </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div id="dashboardContent" class="hidden space-y-8">
+          
+          <!-- Key Metrics -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Total Jobs -->
+            <div class="stat-card rounded-2xl p-6 shadow-sm">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-gray-600">Total Jobs</p>
+                  <p id="totalJobs" class="text-3xl font-bold text-gray-900">0</p>
+                  <p class="text-sm text-gray-500 mt-1">
+                    <span id="totalJobsTrend" class="trend-up">+0%</span> vs last period
+                  </p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <i data-lucide="briefcase" class="w-6 h-6 text-blue-600"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Companies -->
+            <div class="stat-card rounded-2xl p-6 shadow-sm">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-gray-600">Companies</p>
+                  <p id="totalCompanies" class="text-3xl font-bold text-gray-900">0</p>
+                  <p class="text-sm text-gray-500 mt-1">
+                    <span id="companiesTrend" class="trend-up">+0%</span> unique companies
+                  </p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <i data-lucide="building-2" class="w-6 h-6 text-green-600"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Jobs with Salary -->
+            <div class="stat-card rounded-2xl p-6 shadow-sm">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-gray-600">With Salary Info</p>
+                  <p id="jobsWithSalary" class="text-3xl font-bold text-gray-900">0</p>
+                  <p class="text-sm text-gray-500 mt-1">
+                    <span id="salaryTrend" class="trend-up">0%</span> of total jobs
+                  </p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <i data-lucide="dollar-sign" class="w-6 h-6 text-yellow-600"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Jobs with Skills -->
+            <div class="stat-card rounded-2xl p-6 shadow-sm">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-gray-600">With Skills Data</p>
+                  <p id="jobsWithSkills" class="text-3xl font-bold text-gray-900">0</p>
+                  <p class="text-sm text-gray-500 mt-1">
+                    <span id="skillsTrend" class="trend-up">0%</span> of total jobs
+                  </p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                  <i data-lucide="code" class="w-6 h-6 text-purple-600"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Section -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Jobs by Employment Type -->
+            <div class="chart-container rounded-2xl p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Jobs by Employment Type</h3>
+                <div class="flex items-center gap-2 text-sm text-gray-500">
+                  <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                  Distribution
+                </div>
+              </div>
+              <div class="h-64">
+                <canvas id="employmentTypeChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Jobs by Experience Level -->
+            <div class="chart-container rounded-2xl p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Jobs by Experience Level</h3>
+                <div class="flex items-center gap-2 text-sm text-gray-500">
+                  <i data-lucide="bar-chart" class="w-4 h-4"></i>
+                  Breakdown
+                </div>
+              </div>
+              <div class="h-64">
+                <canvas id="experienceChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Jobs Over Time -->
+            <div class="chart-container rounded-2xl p-6 shadow-sm lg:col-span-2">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Jobs Added Over Time</h3>
+                <div class="flex items-center gap-2 text-sm text-gray-500">
+                  <i data-lucide="trending-up" class="w-4 h-4"></i>
+                  Trend Analysis
+                </div>
+              </div>
+              <div class="h-64">
+                <canvas id="timelineChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Analytics -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Top Skills -->
+            <div class="chart-container rounded-2xl p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Top Skills in Demand</h3>
+                <div class="flex items-center gap-2 text-sm text-gray-500">
+                  <i data-lucide="star" class="w-4 h-4"></i>
+                  Most Requested
+                </div>
+              </div>
+              <div id="topSkills" class="space-y-3">
+                <div class="flex justify-center items-center py-8 text-gray-500">
+                  <i data-lucide="loader" class="w-6 h-6 animate-spin"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Top Companies -->
+            <div class="chart-container rounded-2xl p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Top Hiring Companies</h3>
+                <div class="flex items-center gap-2 text-sm text-gray-500">
+                  <i data-lucide="building" class="w-4 h-4"></i>
+                  Most Active
+                </div>
+              </div>
+              <div id="topCompanies" class="space-y-3">
+                <div class="flex justify-center items-center py-8 text-gray-500">
+                  <i data-lucide="loader" class="w-6 h-6 animate-spin"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="chart-container rounded-2xl p-6 shadow-sm">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
+                <div class="flex items-center gap-2 text-sm text-gray-500">
+                  <i data-lucide="clock" class="w-4 h-4"></i>
+                  Latest Updates
+                </div>
+              </div>
+              <div id="recentActivity" class="space-y-3">
+                <div class="flex justify-center items-center py-8 text-gray-500">
+                  <i data-lucide="loader" class="w-6 h-6 animate-spin"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Salary Analysis -->
+          <div class="chart-container rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-lg font-semibold text-gray-900">Salary Range Analysis</h3>
+              <div class="flex items-center gap-2 text-sm text-gray-500">
+                <i data-lucide="indian-rupee" class="w-4 h-4"></i>
+                Compensation Insights
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                <div class="text-2xl font-bold text-green-600" id="avgSalary">₹--</div>
+                <div class="text-sm text-green-700 mt-1">Average Salary</div>
+              </div>
+              <div class="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
+                <div class="text-2xl font-bold text-blue-600" id="minSalary">₹--</div>
+                <div class="text-sm text-blue-700 mt-1">Entry Level</div>
+              </div>
+              <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl border border-purple-200">
+                <div class="text-2xl font-bold text-purple-600" id="maxSalary">₹--</div>
+                <div class="text-sm text-purple-700 mt-1">Senior Level</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+
+  <script>
+    lucide.createIcons();
+
+    let charts = {};
+    let dashboardData = {};
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+      loadDashboardData();
+      
+      // Setup time range selector
+      document.getElementById('timeRange').addEventListener('change', function() {
+        loadDashboardData();
+      });
+    });
+
+    async function loadDashboardData() {
+      try {
+        showLoadingState();
+        
+        // Fetch jobs data
+        const response = await fetch('/api/jobs');
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to load data');
+        }
+        
+        dashboardData = processJobsData(data.jobs || []);
+        renderDashboard(dashboardData);
+        hideLoadingState();
+        
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+        showToast('Dashboard updated successfully', 'success');
+        
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        showToast('Failed to load dashboard data', 'error');
+        hideLoadingState();
+      }
+    }
+
+    function processJobsData(jobs) {
+      const timeRange = document.getElementById('timeRange').value;
+      const now = new Date();
+      let filteredJobs = jobs;
+      
+      // Filter by time range
+      if (timeRange !== 'all') {
+        const daysAgo = parseInt(timeRange);
+        const cutoffDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+        filteredJobs = jobs.filter(job => {
+          const jobDate = new Date(job.scraped_at || job.posted_time);
+          return jobDate >= cutoffDate;
+        });
+      }
+      
+      // Process data
+      const processed = {
+        totalJobs: filteredJobs.length,
+        companies: [...new Set(filteredJobs.map(job => job.company))].length,
+        jobsWithSalary: filteredJobs.filter(job => job.salary_range && job.salary_range !== 'N/A').length,
+        jobsWithSkills: filteredJobs.filter(job => job.extracted_skills && job.extracted_skills !== 'N/A').length,
+        
+        // Employment type distribution
+        employmentTypes: getDistribution(filteredJobs, 'employment_type'),
+        
+        // Experience level distribution
+        experienceLevels: getDistribution(filteredJobs, 'seniority_level'),
+        
+        // Timeline data
+        timeline: getTimelineData(filteredJobs),
+        
+        // Top skills
+        topSkills: getTopSkills(filteredJobs),
+        
+        // Top companies
+        topCompanies: getTopCompanies(filteredJobs),
+        
+        // Recent activity
+        recentActivity: getRecentActivity(filteredJobs),
+        
+        // Salary analysis
+        salaryAnalysis: getSalaryAnalysis(filteredJobs)
+      };
+      
+      return processed;
+    }
+
+    function getDistribution(jobs, field) {
+      const distribution = {};
+      jobs.forEach(job => {
+        const value = job[field] || 'Not Specified';
+        distribution[value] = (distribution[value] || 0) + 1;
+      });
+      return distribution;
+    }
+
+    function getTimelineData(jobs) {
+      const timeline = {};
+      jobs.forEach(job => {
+        const date = new Date(job.scraped_at || job.posted_time);
+        const dateKey = date.toISOString().split('T')[0];
+        timeline[dateKey] = (timeline[dateKey] || 0) + 1;
+      });
+      
+      // Sort by date
+      const sortedDates = Object.keys(timeline).sort();
+      return sortedDates.map(date => ({
+        date,
+        count: timeline[date]
+      }));
+    }
+
+    function getTopSkills(jobs) {
+      const skillCounts = {};
+      jobs.forEach(job => {
+        if (job.extracted_skills && job.extracted_skills !== 'N/A') {
+          const skills = job.extracted_skills.split(',').map(s => s.trim());
+          skills.forEach(skill => {
+            if (skill) {
+              skillCounts[skill] = (skillCounts[skill] || 0) + 1;
+            }
+          });
+        }
+      });
+      
+      return Object.entries(skillCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 10)
+        .map(([skill, count]) => ({ skill, count }));
+    }
+
+    function getTopCompanies(jobs) {
+      const companyCounts = {};
+      jobs.forEach(job => {
+        if (job.company && job.company !== 'N/A') {
+          companyCounts[job.company] = (companyCounts[job.company] || 0) + 1;
+        }
+      });
+      
+      return Object.entries(companyCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 10)
+        .map(([company, count]) => ({ company, count }));
+    }
+
+    function getRecentActivity(jobs) {
+      return jobs
+        .sort((a, b) => new Date(b.scraped_at || b.posted_time) - new Date(a.scraped_at || a.posted_time))
+        .slice(0, 10)
+        .map(job => ({
+          title: job.title,
+          company: job.company,
+          time: job.scraped_at || job.posted_time,
+          type: job.keywords === 'manual_entry' ? 'manual' : 'scraped'
+        }));
+    }
+
+    function getSalaryAnalysis(jobs) {
+      const jobsWithSalary = jobs.filter(job => job.salary_range && job.salary_range !== 'N/A');
+      
+      if (jobsWithSalary.length === 0) {
+        return { avg: 0, min: 0, max: 0 };
+      }
+      
+      const salaries = jobsWithSalary.map(job => {
+        const match = job.salary_range.match(/(\d+(?:,\d{3})*(?:\.\d{2})?)/g);
+        if (match && match.length >= 2) {
+          return (parseInt(match[0].replace(/,/g, '')) + parseInt(match[1].replace(/,/g, ''))) / 2;
+        }
+        return 0;
+      }).filter(s => s > 0);
+      
+      if (salaries.length === 0) return { avg: 0, min: 0, max: 0 };
+      
+      return {
+        avg: Math.round(salaries.reduce((a, b) => a + b, 0) / salaries.length),
+        min: Math.min(...salaries),
+        max: Math.max(...salaries)
+      };
+    }
+
+    function renderDashboard(data) {
+      // Update key metrics
+      document.getElementById('totalJobs').textContent = data.totalJobs.toLocaleString();
+      document.getElementById('totalCompanies').textContent = data.companies.toLocaleString();
+      document.getElementById('jobsWithSalary').textContent = data.jobsWithSalary.toLocaleString();
+      document.getElementById('jobsWithSkills').textContent = data.jobsWithSkills.toLocaleString();
+      
+      // Update percentages
+      const salaryPercentage = data.totalJobs > 0 ? Math.round((data.jobsWithSalary / data.totalJobs) * 100) : 0;
+      const skillsPercentage = data.totalJobs > 0 ? Math.round((data.jobsWithSkills / data.totalJobs) * 100) : 0;
+      
+      document.getElementById('salaryTrend').textContent = `${salaryPercentage}%`;
+      document.getElementById('skillsTrend').textContent = `${skillsPercentage}%`;
+      
+      // Render charts
+      renderEmploymentTypeChart(data.employmentTypes);
+      renderExperienceChart(data.experienceLevels);
+      renderTimelineChart(data.timeline);
+      
+      // Render additional sections
+      renderTopSkills(data.topSkills);
+      renderTopCompanies(data.topCompanies);
+      renderRecentActivity(data.recentActivity);
+      renderSalaryAnalysis(data.salaryAnalysis);
+    }
+
+    function renderEmploymentTypeChart(data) {
+      const ctx = document.getElementById('employmentTypeChart').getContext('2d');
+      
+      if (charts.employmentType) {
+        charts.employmentType.destroy();
+      }
+      
+      charts.employmentType = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(data),
+          datasets: [{
+            data: Object.values(data),
+            backgroundColor: [
+              '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
+            ],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 20,
+                usePointStyle: true
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderExperienceChart(data) {
+      const ctx = document.getElementById('experienceChart').getContext('2d');
+      
+      if (charts.experience) {
+        charts.experience.destroy();
+      }
+      
+      charts.experience = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(data),
+          datasets: [{
+            label: 'Jobs',
+            data: Object.values(data),
+            backgroundColor: 'rgba(99, 102, 241, 0.8)',
+            borderColor: 'rgba(99, 102, 241, 1)',
+            borderWidth: 1,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderTimelineChart(data) {
+      const ctx = document.getElementById('timelineChart').getContext('2d');
+      
+      if (charts.timeline) {
+        charts.timeline.destroy();
+      }
+      
+      charts.timeline = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.map(d => new Date(d.date).toLocaleDateString()),
+          datasets: [{
+            label: 'Jobs Added',
+            data: data.map(d => d.count),
+            borderColor: 'rgba(16, 185, 129, 1)',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderTopSkills(skills) {
+      const container = document.getElementById('topSkills');
+      
+      if (skills.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-500 py-8">No skills data available</p>';
+        return;
+      }
+      
+      container.innerHTML = skills.map(({ skill, count }) => `
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+          <span class="skill-tag">${skill}</span>
+          <span class="text-sm font-medium text-gray-600">${count}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderTopCompanies(companies) {
+      const container = document.getElementById('topCompanies');
+      
+      if (companies.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-500 py-8">No company data available</p>';
+        return;
+      }
+      
+      container.innerHTML = companies.map(({ company, count }) => `
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+          <div class="flex items-center gap-2">
+            <i data-lucide="building-2" class="w-4 h-4 text-gray-400"></i>
+            <span class="font-medium text-gray-900">${company}</span>
+          </div>
+          <span class="text-sm font-medium text-gray-600">${count} jobs</span>
+        </div>
+      `).join('');
+      
+      lucide.createIcons();
+    }
+
+    function renderRecentActivity(activities) {
+      const container = document.getElementById('recentActivity');
+      
+      if (activities.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-500 py-8">No recent activity</p>';
+        return;
+      }
+      
+      container.innerHTML = activities.map(activity => `
+        <div class="activity-item p-3 rounded-lg border border-gray-200">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <p class="font-medium text-gray-900 text-sm">${activity.title}</p>
+              <p class="text-gray-600 text-xs">${activity.company}</p>
+            </div>
+            <div class="flex flex-col items-end">
+              <span class="text-xs px-2 py-1 rounded-full ${activity.type === 'manual' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}">
+                ${activity.type === 'manual' ? 'Manual' : 'Scraped'}
+              </span>
+              <span class="text-xs text-gray-500 mt-1">${getTimeAgo(activity.time)}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderSalaryAnalysis(analysis) {
+      document.getElementById('avgSalary').textContent = analysis.avg > 0 ? `₹${analysis.avg.toLocaleString()}` : '₹--';
+      document.getElementById('minSalary').textContent = analysis.min > 0 ? `₹${analysis.min.toLocaleString()}` : '₹--';
+      document.getElementById('maxSalary').textContent = analysis.max > 0 ? `₹${analysis.max.toLocaleString()}` : '₹--';
+    }
+
+    function showLoadingState() {
+      document.getElementById('loadingState').classList.remove('hidden');
+      document.getElementById('dashboardContent').classList.add('hidden');
+    }
+
+    function hideLoadingState() {
+      document.getElementById('loadingState').classList.add('hidden');
+      document.getElementById('dashboardContent').classList.remove('hidden');
+    }
+
+    function refreshDashboard() {
+      loadDashboardData();
+    }
+
+    function exportReport() {
+      // Create CSV content
+      const csvContent = createDashboardReport();
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `dashboard_report_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      showToast('Report exported successfully!', 'success');
+    }
+
+    function createDashboardReport() {
+      const data = dashboardData;
+      let csv = 'Dashboard Report\n\n';
+      
+      csv += 'Key Metrics\n';
+      csv += `Total Jobs,${data.totalJobs}\n`;
+      csv += `Companies,${data.companies}\n`;
+      csv += `Jobs with Salary,${data.jobsWithSalary}\n`;
+      csv += `Jobs with Skills,${data.jobsWithSkills}\n\n`;
+      
+      csv += 'Top Skills\n';
+      data.topSkills.forEach(({ skill, count }) => {
+        csv += `${skill},${count}\n`;
+      });
+      
+      csv += '\nTop Companies\n';
+      data.topCompanies.forEach(({ company, count }) => {
+        csv += `${company},${count}\n`;
+      });
+      
+      return csv;
+    }
+
+    function getTimeAgo(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffTime = Math.abs(now - date);
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+      return `${Math.floor(diffDays / 30)} months ago`;
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      const icons = {
+        success: 'check-circle',
+        error: 'alert-circle',
+        info: 'info'
+      };
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500'
+      };
+      
+      toast.className = `${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg text-sm font-medium transform translate-x-0 transition-all duration-300 flex items-center space-x-2`;
+      toast.innerHTML = `
+        <i data-lucide="${icons[type]}" class="w-4 h-4"></i>
+        <span>${message}</span>
+      `;
+      
+      document.getElementById('toastContainer').appendChild(toast);
+      lucide.createIcons();
+      
+      setTimeout(() => {
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+  </script>
+</body>
+</html>

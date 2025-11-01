@@ -258,6 +258,7 @@ import time
 import random
 import pandas as pd
 import re
+import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -274,42 +275,63 @@ import traceback
 class LinkedInJobScraper:
     def __init__(self, headless=True, slow_mode=True):
         """
-        Enhanced LinkedIn Job Scraper (no login required)
+        Enhanced LinkedIn Job Scraper with improved company data fetching
         """
         self.headless = headless
         self.slow_mode = slow_mode
         self.driver = None
         self.jobs_data = []
+        self.company_cache = {}  # Cache company data to avoid re-scraping
 
         # Rotate user agents to reduce detection
         self.user_agents = [
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15',
             'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
         ]
 
     # -------------------- WebDriver Setup --------------------
     def setup_driver(self):
-        """Set up Selenium WebDriver"""
+        """Set up Selenium WebDriver with enhanced anti-detection"""
         chrome_options = Options()
         if self.headless:
             chrome_options.add_argument("--headless=new")
+        
+        # Enhanced anti-detection options
         chrome_options.add_argument(f"user-agent={random.choice(self.user_agents)}")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         chrome_options.add_argument("--disable-extensions")
         chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--disable-web-security")
+        chrome_options.add_argument("--disable-features=VizDisplayCompositor")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-background-timer-throttling")
+        chrome_options.add_argument("--disable-backgrounding-occluded-windows")
+        chrome_options.add_argument("--disable-renderer-backgrounding")
 
         # Anti-detection tweaks
         chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         chrome_options.add_experimental_option("useAutomationExtension", False)
+        chrome_options.add_experimental_option("prefs", {
+            "profile.default_content_setting_values.notifications": 2
+        })
 
         service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=chrome_options)
+        
+        # Additional anti-detection measures
         driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-            "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+            "source": """
+                Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+                Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});
+                Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']});
+                window.chrome = {runtime: {}};
+            """
         })
+        
         self.driver = driver
         return driver
 
@@ -381,11 +403,256 @@ class LinkedInJobScraper:
         except:
             return "N/A"
 
+    def extract_company_info_from_job_page(self, soup):
+        """Extract what company info we can from the job page itself"""
+        company_info = {
+            "about": "N/A",
+            "company_stats": [],
+            "industries": "N/A",
+            "company_size": "N/A"
+        }
+        
+        try:
+            # Try to get company size from job criteria
+            job_criteria = soup.select(".description__job-criteria-text")
+            criteria_labels = soup.select(".description__job-criteria-subheader")
+            
+            for label, value in zip(criteria_labels, job_criteria):
+                label_text = label.get_text(strip=True).lower()
+                value_text = value.get_text(strip=True)
+                
+                if "industries" in label_text:
+                    company_info["industries"] = value_text
+                elif "company size" in label_text:
+                    company_info["company_size"] = value_text
+            
+            # Try to extract company info from job description
+            description_elem = soup.select_one(".show-more-less-html__markup")
+            if description_elem:
+                description = description_elem.get_text()
+                
+                # Look for company descriptions
+                company_patterns = [
+                    r'About (?:the )?company[:\-]?\s*(.{50,300})',
+                    r'Company (?:overview|description)[:\-]?\s*(.{50,300})',
+                    r'We are (?:a |an )?(.{50,300})',
+                    r'Our company (.{50,300})'
+                ]
+                
+                for pattern in company_patterns:
+                    match = re.search(pattern, description, re.IGNORECASE | re.DOTALL)
+                    if match:
+                        potential_about = match.group(1).strip()
+                        # Clean up the text
+                        potential_about = re.sub(r'\s+', ' ', potential_about)
+                        if len(potential_about) > 30:  # Only use if substantial
+                            company_info["about"] = potential_about[:300] + "..." if len(potential_about) > 300 else potential_about
+                            break
+            
+        except Exception as e:
+            print(f"⚠️ Error extracting company info from job page: {e}")
+        
+        return company_info
+
+    def scrape_company_about_enhanced(self, company_url):
+        """Enhanced company about scraping with multiple strategies"""
+        try:
+            if not company_url or "linkedin.com" not in company_url:
+                return {}
+            
+            # Check cache first
+            if company_url in self.company_cache:
+                print(f"📋 Using cached company data for {company_url}")
+                return self.company_cache[company_url]
+            
+            print(f"🏢 Attempting to fetch company data from {company_url}")
+            
+            # Strategy 1: Try the main company page first (not /about/)
+            try:
+                self.driver.get(company_url)
+                self.human_like_delay(3, 5)
+                
+                soup = BeautifulSoup(self.driver.page_source, "html.parser")
+                company_info = self.extract_company_info_from_main_page(soup)
+                
+                if company_info.get("about") and company_info["about"] != "N/A":
+                    print("✅ Got company data from main page")
+                    self.company_cache[company_url] = company_info
+                    return company_info
+                    
+            except Exception as e:
+                print(f"⚠️ Main page strategy failed: {e}")
+            
+            # Strategy 2: Try /about/ page with better selectors
+            try:
+                about_url = company_url.rstrip('/') + "/about/"
+                self.driver.get(about_url)
+                
+                # Wait for different possible elements
+                wait_selectors = [
+                    ".org-top-card-summary-info-list__info-item",
+                    ".org-about-us-organization-description",
+                    ".break-words",
+                    "[data-test-id='about-us-description']"
+                ]
+                
+                element_found = False
+                for selector in wait_selectors:
+                    try:
+                        WebDriverWait(self.driver, 3).until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+                        )
+                        element_found = True
+                        break
+                    except TimeoutException:
+                        continue
+                
+                if element_found:
+                    self.human_like_delay(2, 4)
+                    soup = BeautifulSoup(self.driver.page_source, "html.parser")
+                    company_info = self.extract_company_info_from_about_page(soup)
+                    
+                    if company_info.get("about") and company_info["about"] != "N/A":
+                        print("✅ Got company data from about page")
+                        self.company_cache[company_url] = company_info
+                        return company_info
+                        
+            except Exception as e:
+                print(f"⚠️ About page strategy failed: {e}")
+            
+            # Strategy 3: Minimal company info from URL
+            print("📝 Using minimal company info extraction")
+            company_name = self.extract_company_name_from_url(company_url)
+            minimal_info = {
+                "about": f"Professional company profile for {company_name}. Visit LinkedIn for more details.",
+                "company_stats": [],
+                "industries": "N/A",
+                "company_size": "N/A"
+            }
+            
+            self.company_cache[company_url] = minimal_info
+            return minimal_info
+            
+        except Exception as e:
+            print(f"❌ All company scraping strategies failed: {e}")
+            return {}
+
+    def extract_company_info_from_main_page(self, soup):
+        """Extract company info from main company page"""
+        company_info = {
+            "about": "N/A",
+            "company_stats": [],
+            "industries": "N/A",
+            "company_size": "N/A"
+        }
+        
+        try:
+            # Try various selectors for company description
+            about_selectors = [
+                ".break-words p",
+                ".org-top-card-summary__text",
+                ".org-about-company-module__description",
+                "[data-test-id='about-us-description']",
+                ".org-top-card__description"
+            ]
+            
+            for selector in about_selectors:
+                about_elem = soup.select_one(selector)
+                if about_elem:
+                    about_text = about_elem.get_text(strip=True)
+                    if len(about_text) > 30:  # Only use substantial descriptions
+                        company_info["about"] = about_text[:500] + "..." if len(about_text) > 500 else about_text
+                        break
+            
+            # Extract company stats
+            stats_selectors = [
+                ".org-top-card-summary-info-list__info-item",
+                ".org-page-details__definition-text",
+                ".company-industries"
+            ]
+            
+            stats = []
+            for selector in stats_selectors:
+                stat_elements = soup.select(selector)
+                for elem in stat_elements:
+                    stat_text = elem.get_text(strip=True)
+                    if stat_text and len(stat_text) < 100:  # Reasonable length
+                        stats.append(stat_text)
+            
+            company_info["company_stats"] = stats[:5]  # Limit to 5 stats
+            
+        except Exception as e:
+            print(f"⚠️ Error extracting from main page: {e}")
+        
+        return company_info
+
+    def extract_company_info_from_about_page(self, soup):
+        """Extract company info from about page with multiple selectors"""
+        company_info = {
+            "about": "N/A",
+            "company_stats": [],
+            "industries": "N/A",
+            "company_size": "N/A"
+        }
+        
+        try:
+            # Enhanced selectors for about text
+            about_selectors = [
+                ".core-section-container__content p",
+                ".org-about-us-organization-description__text",
+                ".break-words",
+                "[data-test-id='about-us-description']",
+                ".artdeco-card .break-words p",
+                ".org-about-company-module__description"
+            ]
+            
+            for selector in about_selectors:
+                about_elem = soup.select_one(selector)
+                if about_elem:
+                    about_text = about_elem.get_text("\n", strip=True)
+                    if len(about_text) > 30:
+                        company_info["about"] = about_text[:500] + "..." if len(about_text) > 500 else about_text
+                        break
+            
+            # Enhanced selectors for company stats
+            stats_selectors = [
+                ".org-top-card-summary-info-list__info-item",
+                ".org-about-company-module__company-staff-count-range",
+                ".org-about-company-module__company-details dt + dd"
+            ]
+            
+            stats = []
+            for selector in stats_selectors:
+                stat_elements = soup.select(selector)
+                for elem in stat_elements:
+                    stat_text = elem.get_text(strip=True)
+                    if stat_text:
+                        stats.append(stat_text)
+            
+            company_info["company_stats"] = stats[:5]
+            
+        except Exception as e:
+            print(f"⚠️ Error extracting from about page: {e}")
+        
+        return company_info
+
+    def extract_company_name_from_url(self, company_url):
+        """Extract company name from LinkedIn URL"""
+        try:
+            # Extract from URL pattern like /company/company-name/
+            match = re.search(r'/company/([^/]+)', company_url)
+            if match:
+                company_slug = match.group(1)
+                # Convert slug to readable name
+                return company_slug.replace('-', ' ').title()
+        except:
+            pass
+        return "Company"
+
     # -------------------- Job Search --------------------
     def search_jobs(self, keywords, location, limit=25, experience_level=None, job_type=None):
         """
-        Scrape LinkedIn job listings without login.
-        Now collects detailed metadata and company info with IMPROVED accuracy.
+        Scrape LinkedIn job listings with enhanced company data fetching
         """
         if self.driver is None:
             self.setup_driver()
@@ -481,14 +748,23 @@ class LinkedInJobScraper:
 
                     self.jobs_data.append(job)
                     print(f"✅ [{i}/{limit}] {job['title']} at {job['company']}")
+                    
+                    # Add a longer delay every 5 jobs to avoid rate limiting
+                    if i % 5 == 0:
+                        print("🕒 Taking a breather to avoid rate limits...")
+                        self.human_like_delay(5, 8)
 
                 except Exception as e:
                     print(f"⚠️ Error fetching job details for {job.get('job_url')}: {e}")
-                    traceback.print_exc()
                     continue
 
             df = pd.DataFrame(self.jobs_data)
             print(f"\n✅ Successfully scraped {len(df)} detailed jobs.\n")
+            
+            # Print company data success rate
+            jobs_with_company_info = len([j for j in self.jobs_data if j.get('company_about') and j['company_about'] != 'N/A'])
+            print(f"📊 Company data success rate: {jobs_with_company_info}/{len(df)} ({(jobs_with_company_info/len(df)*100):.1f}%)")
+            
             return df
 
         except Exception as e:
@@ -502,7 +778,7 @@ class LinkedInJobScraper:
 
     # -------------------- Extract Job Details --------------------
     def extract_job_details(self, driver):
-        """Extract detailed job and company info with IMPROVED data extraction"""
+        """Extract detailed job and company info with IMPROVED data extraction and enhanced company fetching"""
         soup = BeautifulSoup(driver.page_source, "html.parser")
 
         # IMPROVED: Job Description with multiple selectors
@@ -526,7 +802,7 @@ class LinkedInJobScraper:
         for label, value in zip(criteria_labels, job_criteria):
             details[label.get_text(strip=True)] = value.get_text(strip=True)
 
-        # Company Info
+        # Company Info - Enhanced extraction
         company_elem = soup.select_one(".topcard__org-name-link, .job-details-jobs-unified-top-card__company-name a")
         company_url = company_elem['href'] if company_elem and 'href' in company_elem.attrs else None
 
@@ -536,12 +812,25 @@ class LinkedInJobScraper:
             if company_logo_elem else None
         )
 
-        company_about = ""
+        # Enhanced company data fetching
+        company_about = "N/A"
         company_stats = []
-        if company_url:
-            company_about_data = self.scrape_company_about(company_url)
-            company_about = company_about_data.get("about", "")
-            company_stats = company_about_data.get("company_stats", [])
+        
+        # First, try to get company info from the job page itself
+        job_page_company_info = self.extract_company_info_from_job_page(soup)
+        if job_page_company_info.get("about") != "N/A":
+            company_about = job_page_company_info["about"]
+            company_stats = job_page_company_info.get("company_stats", [])
+        
+        # Then, try to enhance with company page data (if we have a URL and didn't get good info from job page)
+        if company_url and (company_about == "N/A" or len(company_about) < 50):
+            try:
+                company_about_data = self.scrape_company_about_enhanced(company_url)
+                if company_about_data.get("about") and company_about_data["about"] != "N/A":
+                    company_about = company_about_data["about"]
+                    company_stats = company_about_data.get("company_stats", [])
+            except Exception as e:
+                print(f"⚠️ Company page scraping failed, using job page data: {e}")
 
         # IMPROVED: Extract additional data
         skills = self.extract_skills(description)
@@ -557,38 +846,12 @@ class LinkedInJobScraper:
             "company_url": company_url,
             "company_logo": company_logo,
             "company_about": company_about,
-            "company_stats": "; ".join(company_stats),
+            "company_stats": "; ".join(company_stats) if company_stats else "N/A",
             # NEW IMPROVED FIELDS:
             "extracted_skills": ", ".join(skills) if skills else "N/A",
             "salary_range": salary_info,
             "applicant_count": applicant_count,
         }
-
-    # -------------------- Company About Page --------------------
-    def scrape_company_about(self, company_url):
-        """Scrape company's About section"""
-        try:
-            if not company_url:
-                return {}
-
-            if "linkedin.com" not in company_url:
-                return {}
-
-            self.driver.get(company_url + "about/")
-            WebDriverWait(self.driver, 6).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, ".org-top-card-summary-info-list__info-item"))
-            )
-            self.human_like_delay(2, 3)
-
-            soup = BeautifulSoup(self.driver.page_source, "html.parser")
-            about_text = soup.select_one(".core-section-container__content p")
-            about = about_text.get_text("\n", strip=True) if about_text else "N/A"
-
-            stats = [li.get_text(strip=True) for li in soup.select(".org-top-card-summary-info-list__info-item")]
-            return {"about": about, "company_stats": stats}
-
-        except Exception:
-            return {}
 
     # -------------------- Save Methods --------------------
     def save_to_csv(self, filename=None):
@@ -625,27 +888,18 @@ if __name__ == "__main__":
             # Show enhanced data
             jobs_with_skills = df[df['extracted_skills'] != 'N/A']
             jobs_with_salary = df[df['salary_range'] != 'N/A']
+            jobs_with_company_info = df[df['company_about'] != 'N/A']
             
             print(f"\n📊 IMPROVED Data Quality:")
             print(f"  - Jobs with skills: {len(jobs_with_skills)}/{len(df)}")
             print(f"  - Jobs with salary: {len(jobs_with_salary)}/{len(df)}")
+            print(f"  - Jobs with company info: {len(jobs_with_company_info)}/{len(df)}")
             
             # Save files
             csv_file = scraper.save_to_csv()
             excel_file = scraper.save_to_excel()
             print(f"\n💾 Files saved: {csv_file}, {excel_file}")
             
-            # Show sample data
-            print(f"\n📋 Sample Jobs with IMPROVED data:")
-            for i, job in enumerate(df.head(3).itertuples(), 1):
-                print(f"\n{i}. {job.title} at {job.company}")
-                if hasattr(job, 'extracted_skills') and job.extracted_skills != 'N/A':
-                    print(f"   🔧 Skills: {job.extracted_skills}")
-                if hasattr(job, 'salary_range') and job.salary_range != 'N/A':
-                    print(f"   💰 Salary: {job.salary_range}")
-                if hasattr(job, 'applicant_count') and job.applicant_count != 'N/A':
-                    print(f"   👥 Applicants: {job.applicant_count}")
-                
         else:
             print("❌ No jobs found")
             
