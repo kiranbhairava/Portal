@@ -94,12 +94,63 @@
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
     }
+    
+    /* Mobile Responsive Styles */
+    .mobile-sidebar-overlay {
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      transition: opacity 0.3s ease;
+    }
+    
+    .mobile-sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+    
+    .mobile-sidebar.active {
+      transform: translateX(0);
+    }
+    
+    .mobile-menu-button {
+      transition: all 0.2s ease;
+    }
+    
+    .mobile-menu-button:hover {
+      background-color: rgba(99, 102, 241, 0.1);
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+      .desktop-sidebar { display: none; }
+      .mobile-main { margin-left: 0 !important; padding: 1rem; }
+      .mobile-header { flex-direction: column; gap: 1rem; align-items: stretch; }
+      .mobile-header h1 { font-size: 1.5rem; }
+      .mobile-controls { flex-direction: column; gap: 0.5rem; }
+      .mobile-form-grid { grid-template-columns: 1fr; }
+      .mobile-advanced-grid { grid-template-columns: 1fr; }
+      .form-input { padding: 0.75rem; }
+      .floating-card { padding: 1.5rem; }
+    }
+    
+    @media (max-width: 480px) {
+      .mobile-main { padding: 0.75rem; }
+      .floating-card { padding: 1rem; }
+      .form-input { padding: 0.5rem; }
+    }
+    
+    @media (min-width: 769px) {
+      .mobile-sidebar-overlay,
+      .mobile-menu-button { display: none; }
+    }
   </style>
 </head>
 <body class="bg-gray-100">
   <div class="flex min-h-screen">
-    <!-- Sidebar - Fixed -->
-    <aside class="fixed left-0 top-0 h-full w-64 bg-gray-900 text-gray-100 flex flex-col p-6 space-y-6 z-40 overflow-y-auto">
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebarOverlay" class="mobile-sidebar-overlay fixed inset-0 z-40 hidden" onclick="closeMobileSidebar()"></div>
+    
+    <!-- Desktop Sidebar - Fixed (Hidden on mobile) -->
+    <aside class="desktop-sidebar fixed left-0 top-0 h-full w-64 bg-gray-900 text-gray-100 flex flex-col p-6 space-y-6 z-40 overflow-y-auto">
       <div class="flex items-center gap-2 text-xl font-semibold">
         <i data-lucide="briefcase" class="w-5 h-5"></i>
         <span>Job Portal</span>
@@ -112,52 +163,70 @@
           <i data-lucide="search" class="w-4 h-4"></i> Scraper
         </a>
       </nav>
-      
-      <!-- Tips Section -->
-      <!-- <div class="mt-8 pt-6 border-t border-gray-700">
-        <h3 class="text-sm font-semibold text-gray-300 mb-3">💡 Pro Tips</h3>
-        <ul class="space-y-2 text-xs text-gray-400">
-          <li>• Use specific job titles for better results</li>
-          <li>• Try "Remote" for location to find remote jobs</li>
-          <li>• Larger limits take more time but provide more data</li>
-          <li>• Enhanced scraper extracts skills and salary info</li>
-        </ul>
-      </div> -->
     </aside>
 
-    <!-- Main content - Scrollable with left margin to account for fixed sidebar -->
-    <main class="flex-1 ml-64 h-screen overflow-y-auto">
-      <div class="p-10 bg-gray-50">
+    <!-- Mobile Sidebar (Hidden by default) -->
+    <aside id="mobileSidebar" class="mobile-sidebar fixed left-0 top-0 h-full w-64 bg-gray-900 text-gray-100 flex flex-col p-6 space-y-6 z-50 overflow-y-auto md:hidden">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-xl font-semibold">
+          <i data-lucide="briefcase" class="w-5 h-5"></i>
+          <span>Job Portal</span>
+        </div>
+        <button onclick="closeMobileSidebar()" class="p-2 hover:bg-gray-800 rounded">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      
+      <nav class="flex flex-col space-y-2 text-sm font-medium">
+        <a href="/marketplace" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-800" onclick="closeMobileSidebar()">
+          <i data-lucide="layout-list" class="w-4 h-4"></i> Marketplace Jobs
+        </a>
+        <a href="#" class="flex items-center gap-2 px-3 py-2 rounded bg-gray-800" onclick="closeMobileSidebar()">
+          <i data-lucide="search" class="w-4 h-4"></i> Scraper
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main content - Responsive layout -->
+    <main class="flex-1 md:ml-64 h-screen overflow-y-auto mobile-main">
+      <div class="bg-gray-50 min-h-full">
         <!-- Header -->
-        <div class="flex items-center justify-between mb-8">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <i data-lucide="search" class="w-8 h-8 text-indigo-600"></i> 
-              LinkedIn Job Scraper
-            </h1>
-            <p class="text-gray-600 mt-2">Extract comprehensive job data with enhanced accuracy and detailed information</p>
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 md:mb-8 mobile-header p-4 md:p-10 pb-0">
+          <div class="flex items-center gap-4">
+            <!-- Mobile Menu Button -->
+            <button onclick="openMobileSidebar()" class="mobile-menu-button md:hidden p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition">
+              <i data-lucide="menu" class="w-5 h-5 text-gray-600"></i>
+            </button>
+            
+            <div>
+              <h1 class="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <i data-lucide="search" class="w-6 h-6 md:w-8 md:h-8 text-indigo-600"></i> 
+                LinkedIn Job Scraper
+              </h1>
+              <p class="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Extract comprehensive job data with enhanced accuracy and detailed information</p>
+            </div>
           </div>
           
           <!-- Status Indicator -->
-          <div class="flex items-center gap-2 text-sm">
+          <div class="flex items-center gap-2 text-sm mt-4 lg:mt-0">
             <div class="w-2 h-2 bg-green-500 rounded-full pulse-dot"></div>
             <span class="text-gray-600">System Ready</span>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 p-4 md:p-10 pt-0">
           
           <!-- Scraper Form -->
           <div class="lg:col-span-2">
-            <div class="floating-card bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
-              <div class="flex items-center justify-between mb-6">
-                <h2 class="text-xl font-semibold text-gray-900">Configure Scraper</h2>
-                <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-medium">Enhanced Mode</span>
+            <div class="floating-card bg-white rounded-xl md:rounded-2xl shadow-lg p-6 md:p-8 border border-gray-200">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                <h2 class="text-lg md:text-xl font-semibold text-gray-900">Configure Scraper</h2>
+                <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-medium w-fit">Enhanced Mode</span>
               </div>
               
               <form id="scrapeForm" class="space-y-6">
                 <!-- Basic Fields -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mobile-form-grid">
                   <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                       <i data-lucide="search" class="w-4 h-4 inline mr-1"></i>
@@ -167,7 +236,7 @@
                       type="text" 
                       name="keywords" 
                       required 
-                      class="form-input w-full rounded-lg px-4 py-3"
+                      class="form-input w-full rounded-lg px-3 md:px-4 py-2 md:py-3"
                       placeholder="e.g. Python Developer, Data Scientist"
                       autocomplete="off"
                     >
@@ -183,7 +252,7 @@
                       type="text" 
                       name="location" 
                       required 
-                      class="form-input w-full rounded-lg px-4 py-3"
+                      class="form-input w-full rounded-lg px-3 md:px-4 py-2 md:py-3"
                       placeholder="e.g. Bengaluru, India or Remote"
                       autocomplete="off"
                     >
@@ -192,13 +261,13 @@
                 </div>
 
                 <!-- Advanced Options -->
-                <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                  <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <i data-lucide="settings" class="w-5 h-5 mr-2"></i>
+                <div class="bg-gray-50 rounded-xl p-4 md:p-6 border border-gray-200">
+                  <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i data-lucide="settings" class="w-4 h-4 md:w-5 md:h-5 mr-2"></i>
                     Advanced Options
                   </h3>
                   
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mobile-advanced-grid">
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-2">
                         Job Limit
@@ -244,7 +313,7 @@
                   <!-- Scraper Settings -->
                   <div class="mt-6 pt-6 border-t border-gray-200">
                     <h4 class="text-sm font-semibold text-gray-700 mb-3">Scraper Settings</h4>
-                    <div class="flex flex-wrap gap-6">
+                    <div class="flex flex-col sm:flex-row gap-4 sm:gap-6">
                       <label class="flex items-center">
                         <input type="checkbox" name="headless" checked class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                         <span class="ml-2 text-sm text-gray-700">Headless Mode (Faster)</span>
@@ -261,9 +330,9 @@
                 <button 
                   type="submit" 
                   id="submitBtn"
-                  class="gradient-button w-full text-white font-semibold py-4 px-6 rounded-xl transition duration-200 flex items-center justify-center space-x-3 shadow-lg"
+                  class="gradient-button w-full text-white font-semibold py-3 md:py-4 px-4 md:px-6 rounded-xl transition duration-200 flex items-center justify-center space-x-3 shadow-lg"
                 >
-                  <i data-lucide="rocket" class="w-5 h-5"></i>
+                  <i data-lucide="rocket" class="w-4 h-4 md:w-5 md:h-5"></i>
                   <span>Start Enhanced Scraping</span>
                 </button>
               </form>
@@ -274,9 +343,9 @@
           <div class="space-y-6">
             
             <!-- Current Status -->
-            <div id="statusPanel" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hidden">
+            <div id="statusPanel" class="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 border border-gray-200 hidden">
               <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Scraping Progress</h3>
+                <h3 class="text-base md:text-lg font-semibold text-gray-900">Scraping Progress</h3>
                 <button onclick="cancelJob()" class="text-red-600 hover:text-red-800 text-sm font-medium">
                   Cancel
                 </button>
@@ -294,7 +363,7 @@
               </div>
               
               <!-- Status Message -->
-              <div id="currentStatus" class="status-card rounded-lg p-4 mb-4">
+              <div id="currentStatus" class="status-card rounded-lg p-3 md:p-4 mb-4">
                 <div class="flex items-center space-x-3">
                   <div class="pulse-dot w-3 h-3 bg-indigo-600 rounded-full"></div>
                   <span id="statusMessage" class="text-sm font-medium text-gray-700">Initializing...</span>
@@ -302,7 +371,7 @@
               </div>
               
               <!-- Job Details -->
-              <div class="text-sm text-gray-600 space-y-1">
+              <div class="text-xs md:text-sm text-gray-600 space-y-1">
                 <p><span class="font-medium">Job ID:</span> <span id="jobId" class="font-mono">--</span></p>
                 <p><span class="font-medium">Keywords:</span> <span id="jobKeywords">--</span></p>
                 <p><span class="font-medium">Location:</span> <span id="jobLocation">--</span></p>
@@ -311,31 +380,31 @@
             </div>
 
             <!-- Results Panel -->
-            <div id="resultsPanel" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hidden">
+            <div id="resultsPanel" class="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 border border-gray-200 hidden">
               <div class="flex items-center space-x-3 mb-4">
-                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <i data-lucide="check" class="w-4 h-4 text-green-600"></i>
+                <div class="w-6 h-6 md:w-8 md:h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <i data-lucide="check" class="w-3 h-3 md:w-4 md:h-4 text-green-600"></i>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900">Scraping Complete!</h3>
+                <h3 class="text-base md:text-lg font-semibold text-gray-900">Scraping Complete!</h3>
               </div>
               
               <!-- Enhanced Results Summary -->
-              <div id="resultsSummary" class="success-card rounded-lg p-4 mb-4">
+              <div id="resultsSummary" class="success-card rounded-lg p-3 md:p-4 mb-4">
                 <div class="grid grid-cols-2 gap-4 text-center">
                   <div>
-                    <div class="text-2xl font-bold text-green-600" id="totalJobsFound">0</div>
+                    <div class="text-xl md:text-2xl font-bold text-green-600" id="totalJobsFound">0</div>
                     <div class="text-xs text-gray-600">Jobs Found</div>
                   </div>
                   <div>
-                    <div class="text-2xl font-bold text-blue-600" id="jobsWithSkills">0</div>
+                    <div class="text-xl md:text-2xl font-bold text-blue-600" id="jobsWithSkills">0</div>
                     <div class="text-xs text-gray-600">With Skills</div>
                   </div>
                   <div>
-                    <div class="text-2xl font-bold text-purple-600" id="companiesFound">0</div>
+                    <div class="text-xl md:text-2xl font-bold text-purple-600" id="companiesFound">0</div>
                     <div class="text-xs text-gray-600">Companies</div>
                   </div>
                   <div>
-                    <div class="text-2xl font-bold text-orange-600" id="jobsWithSalary">0</div>
+                    <div class="text-xl md:text-2xl font-bold text-orange-600" id="jobsWithSalary">0</div>
                     <div class="text-xs text-gray-600">With Salary</div>
                   </div>
                 </div>
@@ -345,7 +414,7 @@
               <div class="space-y-3">
                 <button 
                   onclick="viewResults()" 
-                  class="w-full bg-indigo-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-indigo-700 transition flex items-center justify-center space-x-2"
+                  class="w-full bg-indigo-600 text-white font-medium py-2 md:py-3 px-3 md:px-4 rounded-lg hover:bg-indigo-700 transition flex items-center justify-center space-x-2"
                 >
                   <i data-lucide="eye" class="w-4 h-4"></i>
                   <span>View Jobs in Marketplace</span>
@@ -371,60 +440,60 @@
             </div>
 
             <!-- Error Panel -->
-            <div id="errorPanel" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hidden">
+            <div id="errorPanel" class="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 border border-gray-200 hidden">
               <div class="flex items-center space-x-3 mb-4">
-                <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                  <i data-lucide="alert-circle" class="w-4 h-4 text-red-600"></i>
+                <div class="w-6 h-6 md:w-8 md:h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <i data-lucide="alert-circle" class="w-3 h-3 md:w-4 md:h-4 text-red-600"></i>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900">Scraping Failed</h3>
+                <h3 class="text-base md:text-lg font-semibold text-gray-900">Scraping Failed</h3>
               </div>
               
-              <div class="error-card rounded-lg p-4 mb-4">
+              <div class="error-card rounded-lg p-3 md:p-4 mb-4">
                 <p id="errorMessage" class="text-sm text-red-700"></p>
               </div>
               
               <button 
                 onclick="resetForm()" 
-                class="w-full bg-gray-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-gray-700 transition"
+                class="w-full bg-gray-600 text-white font-medium py-2 md:py-3 px-3 md:px-4 rounded-lg hover:bg-gray-700 transition"
               >
                 Try Again
               </button>
             </div>
 
             <!-- Info Panel -->
-            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <i data-lucide="info" class="w-5 h-5 mr-2 text-blue-500"></i>
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl md:rounded-2xl p-4 md:p-6 border border-blue-200">
+              <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i data-lucide="info" class="w-4 h-4 md:w-5 md:h-5 mr-2 text-blue-500"></i>
                 Enhanced Features
               </h3>
-              <ul class="space-y-2 text-sm text-gray-700">
+              <ul class="space-y-2 text-xs md:text-sm text-gray-700">
                 <li class="flex items-start space-x-2">
-                  <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
+                  <i data-lucide="check-circle" class="w-3 h-3 md:w-4 md:h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
                   <span>Automatic skill extraction from job descriptions</span>
                 </li>
                 <li class="flex items-start space-x-2">
-                  <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
+                  <i data-lucide="check-circle" class="w-3 h-3 md:w-4 md:h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
                   <span>Salary range detection and parsing</span>
                 </li>
                 <li class="flex items-start space-x-2">
-                  <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
+                  <i data-lucide="check-circle" class="w-3 h-3 md:w-4 md:h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
                   <span>Company information and logos</span>
                 </li>
                 <li class="flex items-start space-x-2">
-                  <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
+                  <i data-lucide="check-circle" class="w-3 h-3 md:w-4 md:h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
                   <span>Applicant count when available</span>
                 </li>
                 <li class="flex items-start space-x-2">
-                  <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
+                  <i data-lucide="check-circle" class="w-3 h-3 md:w-4 md:h-4 text-green-500 mt-0.5 flex-shrink-0"></i>
                   <span>Anti-detection measures for reliability</span>
                 </li>
               </ul>
             </div>
 
             <!-- Recent Activity -->
-            <div id="recentActivity" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <i data-lucide="clock" class="w-5 h-5 mr-2"></i>
+            <div id="recentActivity" class="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 border border-gray-200">
+              <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i data-lucide="clock" class="w-4 h-4 md:w-5 md:h-5 mr-2"></i>
                 Recent Scrapes
               </h3>
               <div id="recentList" class="space-y-3">
@@ -446,10 +515,40 @@
     let currentJobId = null;
     let pollInterval = null;
 
+    // Mobile sidebar functions
+    function openMobileSidebar() {
+      document.getElementById('mobileSidebar').classList.add('active');
+      document.getElementById('sidebarOverlay').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileSidebar() {
+      document.getElementById('mobileSidebar').classList.remove('active');
+      document.getElementById('sidebarOverlay').classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }
+
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
       loadRecentActivity();
       setupFormValidation();
+      
+      // Close mobile sidebar when clicking outside
+      document.addEventListener('click', function(e) {
+        const sidebar = document.getElementById('mobileSidebar');
+        const menuButton = document.querySelector('.mobile-menu-button');
+        
+        if (sidebar && menuButton && !sidebar.contains(e.target) && !menuButton.contains(e.target)) {
+          closeMobileSidebar();
+        }
+      });
+
+      // Handle window resize
+      window.addEventListener('resize', function() {
+        if (window.innerWidth >= 768) {
+          closeMobileSidebar();
+        }
+      });
     });
 
     // Form submission
@@ -544,13 +643,13 @@
       if (loading) {
         btn.disabled = true;
         btn.innerHTML = `
-          <div class="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
+          <div class="animate-spin w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full"></div>
           <span>Scraping in Progress...</span>
         `;
       } else {
         btn.disabled = false;
         btn.innerHTML = `
-          <i data-lucide="rocket" class="w-5 h-5"></i>
+          <i data-lucide="rocket" class="w-4 h-4 md:w-5 md:h-5"></i>
           <span>Start Enhanced Scraping</span>
         `;
         lucide.createIcons();
